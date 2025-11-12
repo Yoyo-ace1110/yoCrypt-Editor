@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, qdarktheme
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QTextCursor, QTextDocument
@@ -1005,6 +1005,7 @@ if __name__ == "__main__":
     with Code_Timer("init"):
         file_to_open = None
         app = QApplication(sys.argv)
+        qdarktheme.setup_theme("dark")
         # 被開啟檔案的路徑
         if len(sys.argv) > 1: file_to_open = sys.argv[1]
         # 傳遞file_to_open
@@ -1012,3 +1013,4 @@ if __name__ == "__main__":
     window.show()
     sys.exit(app.exec_())
 # tabs?
+# color themes?
