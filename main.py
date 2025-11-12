@@ -81,6 +81,29 @@ class PasswordPrompt(QDialog):
         self.label.setText("請輸入主密碼")
         self.button.setEnabled(True)
 
+class Tab:
+    def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, file_path: str|None = None, is_dirty: bool = False, is_crypt: bool = False):
+        self.main = main_window
+        self.index = index
+        self.text = text_edit
+        self.path = file_path
+        self.is_dirty = is_dirty
+        self.is_crypt = is_crypt
+        # 綁定事件
+        self.text.textChanged.connect(self._handle_text_change)
+
+    def _handle_text_change(self):
+        """ 處理文字變更事件 """
+        self.is_dirty = True
+        self.update_title()
+
+    def update_title(self):
+        """ 更新title """
+        if not self.path: return self.main.setTabText(self.index, "untitled●")
+        title = os.path.basename(self.current_file)
+        title = title+' ●' if self.is_dirty else title
+        self.main.setTabText(self.index, title)
+
 class FR_Bar(QWidget):
     def init(self, main_window: "MainWindow"):
         super().__init__(main_window)
