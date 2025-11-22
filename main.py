@@ -1,4 +1,5 @@
-import sys, os, qdarktheme
+import sys, os, qdarktheme # pyright: ignore[reportMissingImports]
+from enum import Enum
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QTextCursor, QTextDocument
@@ -81,6 +82,11 @@ class PasswordPrompt(QDialog):
         self.label.setText("請輸入主密碼")
         self.button.setEnabled(True)
 
+class Theme(Enum):
+    dark = "dark"
+    light = "light"
+    origin = "origin"
+
 class Tab:
     def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, file_path: str|None = None, is_dirty: bool = False, is_crypt: bool = False):
         self.main = main_window
@@ -99,10 +105,10 @@ class Tab:
 
     def update_title(self):
         """ 更新title """
-        if not self.path: return self.main.setTabText(self.index, "untitled●")
-        title = os.path.basename(self.current_file)
+        if not self.path: return self.main.tabs.setTabText(self.index, "untitled●")
+        title = os.path.basename(self.path)
         title = title+' ●' if self.is_dirty else title
-        self.main.setTabText(self.index, title)
+        self.main.tabs.setTabText(self.index, title)
 
 class FR_Bar(QWidget):
     def init(self, main_window: "MainWindow"):
@@ -458,10 +464,12 @@ class MainWindow(QMainWindow):
         self.is_dirty: bool = False        # 檔案是否未儲存
         self.is_crypt: bool = False        # 是否為加密檔案
         self.first_FR: bool = True         # 是否尋找/取代過
-        self.last_find_text = ""         # 上次的搜尋關鍵字
+        self.theme: Theme = Theme.dark     # 預設色彩主題(深色)
+        self.last_find_text = ""           # 上次的搜尋關鍵字
         self.last_replace_text = ""        # 上次的取代關鍵字
         # 初始化介面
         self.init_ui()
+        self._set_theme()
         self.focus_text_edit()
         # 支援直接開啟檔案
         if not self._handle_external_file(file_to_open if file_to_open else welcome_file):
@@ -541,8 +549,12 @@ class MainWindow(QMainWindow):
         zoom_out_action = QAction("Zoom Out", self)               # 字體縮小
         reset_zoom_action = QAction("Reset Zoom", self)           # 還原預設字體大小
 
-        find_action = QAction("Find", self)
-        replace_action = QAction("Replace", self)
+        find_action = QAction("Find", self)                       # 尋找
+        replace_action = QAction("Replace", self)                 # 取代
+
+        set_theme_dark_action = QAction("Toggle To Dark Theme", self)       # 深色模式
+        set_theme_light_action = QAction("Toggle To Light Theme", self)     # 淺色模式
+        set_theme_origin_action = QAction("Toggle To Original Theme", self) # 作業系統原生視窗
 
         # 連接事件
         change_password_action.triggered.connect(self.change_master_password)
@@ -563,6 +575,10 @@ class MainWindow(QMainWindow):
         find_action.triggered.connect(self.action_find)
         replace_action.triggered.connect(self.action_replace)
 
+        set_theme_dark_action.triggered.connect(self.action_set_theme_dark)
+        set_theme_light_action.triggered.connect(self.action_set_theme_light)
+        set_theme_origin_action.triggered.connect(self.action_set_theme_origin)
+
         # 快捷鍵
         new_action.setShortcut("Ctrl+T")
         open_action.setShortcut("Ctrl+Shift+O")
@@ -578,9 +594,11 @@ class MainWindow(QMainWindow):
 
         # 新增 action 至 menubar
         file_menu.addAction(change_password_action)
+        file_menu.addSeparator()
         file_menu.addAction(new_action)
         file_menu.addAction(open_action)
         file_menu.addAction(open_crypted_action)
+        file_menu.addSeparator()
         file_menu.addAction(auto_save_action)
         file_menu.addAction(save_action)
         file_menu.addAction(save_crypted_action)
@@ -593,6 +611,10 @@ class MainWindow(QMainWindow):
         view_menu.addAction(zoom_in_action)
         view_menu.addAction(zoom_out_action)
         view_menu.addAction(reset_zoom_action)
+        view_menu.addSeparator()
+        view_menu.addAction(set_theme_dark_action)
+        view_menu.addAction(set_theme_light_action)
+        view_menu.addAction(set_theme_origin_action)
 
     def focus_text_edit(self):
         """ active """
@@ -991,6 +1013,40 @@ class MainWindow(QMainWindow):
         self.FR_dock.adjustSize()
         self.FR_dock.show()
 
+    def _set_theme(self):
+        """ 切換色彩主題 """
+        if self.theme == Theme.origin:
+            # 作業系統原生主題
+            app = QApplication.instance()
+            if not isinstance(app, QApplication): raise RuntimeError("QApplication.instance is None")
+            app.setStyleSheet("""
+                QWidget { color: black; background-color: #ECECEC; }
+                QPushButton { color: black; background-color: #F0F0F0; border: 1px solid #C0C0C0; }
+                QPushButton:hover { background-color: #E6E6E6; }
+                QPushButton:pressed { background-color: #C0C0C0; border-style: inset; }
+                QLineEdit, QLabel { color: black; background-color: #ECECEC; }
+                QPlainTextEdit { color: black; background-color: white; }
+                QDockWidget { color: black; background-color: #ECECEC; }
+            """)
+            QApplication.setStyle(QStyleFactory.create('Fusion')) # +這行更像light
+            # qdarktheme的主題
+        else: qdarktheme.setup_theme(self.theme.value)
+
+    def action_set_theme_dark(self):
+        """ 切換到深色主題 """
+        self.theme = Theme.dark
+        self._set_theme()
+
+    def action_set_theme_light(self):
+        """ 切換到深色主題 """
+        self.theme = Theme.light
+        self._set_theme()
+
+    def action_set_theme_origin(self):
+        """ 切換到深色主題 """
+        self.theme = Theme.origin
+        self._set_theme()
+
     def closeEvent(self, a0):
         """ 關閉時的動作 """
         if a0 is None: raise ValueError("in closeEvent: a0 is None")
@@ -1005,12 +1061,10 @@ if __name__ == "__main__":
     with Code_Timer("init"):
         file_to_open = None
         app = QApplication(sys.argv)
-        qdarktheme.setup_theme("dark")
         # 被開啟檔案的路徑
         if len(sys.argv) > 1: file_to_open = sys.argv[1]
         # 傳遞file_to_open
         window = MainWindow(file_to_open=file_to_open)
     window.show()
     sys.exit(app.exec_())
-# tabs?
-# color themes?
+# tabs? 
