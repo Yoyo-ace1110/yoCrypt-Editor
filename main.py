@@ -100,15 +100,15 @@ class Tab:
 
     def _handle_text_change(self):
         """ 處理文字變更事件 """
+        if self.is_dirty: return
         self.is_dirty = True
         self.update_title()
 
     def update_title(self):
         """ 更新title """
-        if not self.file_path: return self.main.tabs.setTabText(self.index, "untitled●")
-        title = os.path.basename(self.file_path)
-        title = title+' ●' if self.is_dirty else title
-        self.main.tabs.setTabText(self.index, title)
+        base_title = os.path.basename(self.file_path) if self.file_path else "untitled"
+        final_title = base_title + ' ●' if self.is_dirty else base_title
+        self.main.tabs.setTabText(self.index, final_title)
 
 class FR_Bar(QWidget):
     def init(self, main_window: "MainWindow"):
@@ -386,8 +386,8 @@ class FR_Bar(QWidget):
         self.action_find_next()
         self.update_search_results()
         # dirty
-        self.main_window.is_dirty = True
-        self.main_window._update_tab_title()
+        self.main_window.tab.is_dirty = True
+        self.main_window.tab.update_title()
 
     def action_replace_all(self):
         """ 全部取代 """
@@ -436,8 +436,8 @@ class FR_Bar(QWidget):
             final_cursor.setPosition(last_position)
             self.main_window.text_edit.setTextCursor(final_cursor)
             # dirty
-            self.main_window.is_dirty = True
-            self.main_window._update_tab_title()
+            self.main_window.tab.is_dirty = True
+            self.main_window.tab.update_title()
         self.update_search_results()
 
 class FindBar(FR_Bar):
@@ -460,6 +460,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("yoCrypt Editor")
         self.resize(800, 600)
         self.password: bytearray = bytearray() # 密碼
+        self.tab_index: int = 0
         self.first_FR: bool = True         # 是否尋找/取代過
         self.theme: Theme = Theme.dark     # 預設色彩主題(深色)
         self.last_find_text = ""           # 上次的搜尋關鍵字
@@ -474,10 +475,10 @@ class MainWindow(QMainWindow):
             self._handle_external_file(welcome_file)
 
     def init_Tab(self):
-        """ 初始化self.Tab(含text_edit) """
+        """ 初始化self.Tab_list(含text_edit) """
         text_edit = QPlainTextEdit(self) # 文字框建立
-        self.Tab = Tab(self, index=0, text_edit=text_edit, file_path=None, is_dirty=False, is_crypt=False)
-        self.Tab_list: list[Tab] = [self.Tab]
+        temp_Tab = Tab(self, index=self.tab_index, text_edit=text_edit, file_path=None, is_dirty=False, is_crypt=False)
+        self.tab_list: list[Tab] = [temp_Tab]
 
     def init_ui(self):
         # 設定 menuBar
@@ -494,11 +495,13 @@ class MainWindow(QMainWindow):
         if view_menu is None: raise TypeError("view_menu is None")
 
         # 輸入框/提示(setStatusBar)
-        self.text_edit.zoomIn(3)                                # 預設放大2次
+        self.text_edit.zoomIn(3)                                # 預設放大3次
         self.tabs = QTabWidget()                                # 分頁欄建立
         self.tabs.setTabsClosable(True)                         # 可以關閉
         self.tabs.addTab(self.text_edit, "")                    # 加入第一個分頁
-        self.text_edit.textChanged.connect(self._handle_text_change) # 綁定文字變更事件
+
+        self.tabs.currentChanged.connect(self._handle_tab_change)   # 切換分頁事件
+        self.tabs.tabCloseRequested.connect(self._handle_tab_close) # 關閉分頁事件
 
         self.default_font = self.text_edit.font()               # 預設字體
         self.default_point_size = self.default_font.pointSize() # 紀錄預設大小
@@ -620,47 +623,30 @@ class MainWindow(QMainWindow):
         view_menu.addAction(set_theme_origin_action)
 
     @property
+    def tab(self) -> Tab: 
+        return self.tab_list[self.tab_index]
+    @tab.setter
+    def tab(self, val: Tab):
+        self.tab_list[self.tab_index] = val
+
+    @property
     def text_edit(self) -> QPlainTextEdit: 
-        return self.Tab.text_edit
+        return self.tab.text_edit
     @text_edit.setter
     def text_edit(self, val: QPlainTextEdit):
-        self.Tab.text_edit = val
+        self.tab.text_edit = val
     
     @property
     def file_path(self) -> str | None: 
-        return self.Tab.file_path
+        return self.tab.file_path
     @file_path.setter
     def file_path(self, val: str | None):
-        self.Tab.file_path = val
-    
-    @property
-    def is_dirty(self) -> bool: 
-        return self.Tab.is_dirty
-    @is_dirty.setter
-    def is_dirty(self, val: bool):
-        self.Tab.is_dirty = val
-
-    @property
-    def is_crypt(self) -> bool: 
-        return self.Tab.is_crypt
-    @is_crypt.setter
-    def is_crypt(self, val: bool):
-        self.Tab.is_crypt = val
+        self.tab.file_path = val
 
     def focus_text_edit(self):
         """ active """
         self.text_edit.activateWindow()
         self.text_edit.setFocus()
-
-    def _update_tab_title(self):
-        """ 更新分頁title """
-        current_index = self.tabs.currentIndex()
-        if current_index == -1: return
-
-        title = os.path.basename(self.file_path) if self.file_path else "untitled"
-        title_now = self.tabs.tabText(current_index)
-        title = title+' ●' if self.is_dirty else title
-        if title != title_now: self.tabs.setTabText(current_index, title)
 
     def _ensure_password(self) -> bool:
         """ 檢查密碼是否存在 若不存在則彈出輸入框 """
@@ -673,12 +659,40 @@ class MainWindow(QMainWindow):
             if (login.exec_() != QDialog.Accepted) or (not login.success): return False
             self.password = login.password
         return True
+    
+    def _handle_tab_change(self, index: int):
+        """ 處理分頁切換事件 """
+        self.tab_index = index
+
+    def _handle_tab_close(self, index: int):
+        """ 處理分頁關閉事件 """
+        old_index = self.tab_index
+        self.tab_index = index
+        self.tabs.setCurrentIndex(index)
+        # 確保不會誤刪檔案
+        if not self._dirty_warning_success():
+            # 取消關閉
+            self.tab_index = old_index
+            self.tabs.setCurrentIndex(old_index)
+            return
+        self.tabs.removeTab(index)
+        del self.tab_list[index]
+        # 更新各tab的index
+        for i in range(index, len(self.tab_list)):
+            self.tab_list[i].index = i
+        self.tab_index = self.tabs.currentIndex()
+        # 至少留一個分頁
+        if self.tabs.count() == 0: self.action_new()
+        self.focus_text_edit()
 
     def _dirty_warning_success(self) -> bool:
         """ 當檔案未儲存且會遺失時 詢問使用者是否要儲存(True代表不用cancel) """
-        if (not self.is_dirty) or (self.file_path is None): return True
+        empty_file = (self.file_path is None) and (not self.text_edit.toPlainText())
+        if (not self.tab.is_dirty) or empty_file: return True
+        file_path = "untitled" if (self.file_path is None) else self.file_path
+        # 詢問使用者
         reply = QMessageBox.question(self, "儲存變更",
-            "檔案 ["+str(self.file_path)+"] 尚未儲存，是否要儲存變更？",
+            "檔案 ["+file_path+"] 尚未儲存，是否要儲存變更？",
             # 提供 Yes, No, Cancel 三個選項
             QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
             QMessageBox.Cancel # 預設選中 Cancel 避免誤觸
@@ -696,13 +710,17 @@ class MainWindow(QMainWindow):
         self.password = bytearray()
 
     def action_new(self):
-        """ 新檔案 """
-        if not self._dirty_warning_success(): return
-        self.file_path = None
-        self.is_dirty = True
-        self.is_crypt = False
-        self.text_edit.clear()
-        self._update_tab_title()
+        """ 新增一個分頁(檔案) """
+        new_index = self.tabs.count()
+        # 新分頁
+        text_edit = QPlainTextEdit(self)
+        new_tab = Tab(self, index=new_index, text_edit=text_edit, file_path=None, is_dirty=True, is_crypt=False)
+        self.tab_list.append(new_tab)
+        # 切分頁
+        self.tabs.addTab(text_edit, "")
+        self.tabs.setCurrentIndex(new_index)
+        self.tab.update_title()
+        self.text_edit.zoomIn(3)
 
     def _read_file_from(self, file_path: str, hint: str, decrypt: bool = False) -> bool:
         """ 讀取指定位置的檔案 回傳是否成功 """
@@ -734,9 +752,9 @@ class MainWindow(QMainWindow):
             self.statusBar().clearMessage() # pyright: ignore[reportOptionalMemberAccess]
             QTimer.singleShot(50, msg)
             self.file_path = file_path
-            self.is_dirty = False # 寫在這裡確保只有成功開啟時才更新
-            self._update_tab_title()
-            self.is_crypt = decrypt
+            self.tab.is_dirty = False # 寫在這裡確保只有成功開啟時才更新
+            self.tab.update_title()
+            self.tab.is_crypt = decrypt
             return True
         except Exception as e: 
             QMessageBox.critical(self, "解密錯誤", f"解密檔案 {file_name} 失敗: {e}")
@@ -746,25 +764,21 @@ class MainWindow(QMainWindow):
     def _handle_external_file(self, file_path: str) -> bool:
         """ 處理從外部傳入的檔案路徑 """
         if not self._read_file_from(file_path, "開啟檔案", False):
-            self._update_tab_title()
+            self.tab.update_title()
             return False
         return True
 
-    def _handle_text_change(self):
-        """ 處理文字區的內容變更 設定is_dirty旗標並更新標題 """
-        if not self.is_dirty:
-            self.is_dirty = True
-            self._update_tab_title()
-
     def _open_file(self, hint: str, decrypt: bool) -> bool:
         """ 選擇並開啟檔案 """
-        if not self._dirty_warning_success(): return False
         options = QFileDialog.Options()
         # 取得路徑
         file_path, _ = QFileDialog.getOpenFileName(self, hint, "", "All Files (*)", options=options)
         if not file_path: return False # 取消
         # 開啟檔案
-        return self._read_file_from(file_path, hint, decrypt)
+        self.action_new()
+        success = self._read_file_from(file_path, hint, decrypt)
+        if not success: self._handle_tab_close(self.tab_index)
+        return success
 
     def action_open(self): 
         """ 開啟普通檔案 """
@@ -793,9 +807,9 @@ class MainWindow(QMainWindow):
             # 提示
             self.statusBar().clearMessage() # pyright: ignore[reportOptionalMemberAccess]
             QTimer.singleShot(50, msg) # pyright: ignore[reportOptionalMemberAccess]
-            self.is_dirty = False
-            self._update_tab_title()
-            self.is_crypt = encrypt
+            self.tab.is_dirty = False
+            self.tab.update_title()
+            self.tab.is_crypt = encrypt
             return True
         # 儲存失敗
         except Exception as e: QMessageBox.critical(self, "錯誤", f"儲存{os.path.basename(file_path)}失敗: {e}")
@@ -838,7 +852,7 @@ class MainWindow(QMainWindow):
 
     def _auto_save(self) -> bool:
         """ 自動判斷並儲存-有回傳值 """
-        if self.is_crypt: 
+        if self.tab.is_crypt: 
             if not self._ensure_password(): return False
             # 同action_save_as_crypted
             if (self.file_path is None):
@@ -1081,9 +1095,12 @@ class MainWindow(QMainWindow):
     def closeEvent(self, a0):
         """ 關閉時的動作 """
         if a0 is None: raise ValueError("in closeEvent: a0 is None")
-        if not self._dirty_warning_success():
-            a0.ignore()
-            return
+        for i in range(len(self.tab_list)):
+            self.tab_index = i
+            self.tabs.setCurrentIndex(i)
+            if not self._dirty_warning_success():
+                a0.ignore()
+                return
         self._clear_master_password()
         a0.accept()
 
@@ -1098,4 +1115,3 @@ if __name__ == "__main__":
         window = MainWindow(file_to_open=file_to_open)
     window.show()
     sys.exit(app.exec_())
-# tabs? 
