@@ -1,18 +1,19 @@
 import sys, os, qdarktheme # pyright: ignore[reportMissingImports]
 from enum import Enum
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
-from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtGui import QTextCursor, QTextDocument
+from PyQt5.QtCore import QTimer, Qt, QRegExp
+from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter, QTextCharFormat, QColor, QFont
 from yotools200.yoCrypt import yoCrypt_init, hash_password, verify_password, yoAES
 from yotools200.utils import resource_path, Code_Timer
-yoCrypt_init(360000, 16, 32, 'utf-8')
+yoCrypt_init(360000, 16, 32, "utf-8")
 
-encoding = 'utf-8'
+encoding = "utf-8"
 password_file_name = "password.txt"
 password_file = resource_path(password_file_name)
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
 window: "MainWindow"
+count = 0
 
 def _clear_dialog_input(dialog: QDialog):
     """ 清除QDialog的內容 """
@@ -88,13 +89,15 @@ class Theme(Enum):
     origin = "origin"
 
 class Tab:
-    def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, file_path: str|None = None, is_dirty: bool = False, is_crypt: bool = False):
+    def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, file_path: str|None = None, 
+                 is_dirty: bool = False, is_crypt: bool = False, highlighter: QSyntaxHighlighter|None = None):
         self.main = main_window
         self.index = index
         self.text_edit = text_edit
         self.file_path = file_path
         self.is_dirty = is_dirty
         self.is_crypt = is_crypt
+        self.highlighter = highlighter
         # 綁定事件
         self.text_edit.textChanged.connect(self._handle_text_change)
 
@@ -107,7 +110,7 @@ class Tab:
     def update_title(self):
         """ 更新title """
         base_title = os.path.basename(self.file_path) if self.file_path else "untitled"
-        final_title = base_title + ' ●' if self.is_dirty else base_title
+        final_title = base_title + " ●" if self.is_dirty else base_title
         self.main.tabs.setTabText(self.index, final_title)
 
 class FR_Bar(QWidget):
@@ -453,6 +456,70 @@ class ReplaceBar(FR_Bar):
         super().init_replace_bar()
         self.main_layout.addStretch(1)
 
+class PyHighlighter(QSyntaxHighlighter):
+    # 多行字串標記
+    NO_STATE = 0                  # None
+    STATE_TRIPLE_DOUBLE_QUOTE = 1 # """ """
+    STATE_TRIPLE_SINGLE_QUOTE = 2 # ''' '''
+    def __init__(self, parent_document: QTextDocument):
+        super().__init__(parent_document)
+        self.rules: list[tuple[QRegExp, QTextCharFormat]] = []
+        # 初始化函數
+        self._setup_formats()
+        self._setup_reg_exp()
+        self._setup_rules()
+
+    def _setup_formats(self):
+        """ 設定樣式 """
+        self.format_keyword = QTextCharFormat()
+        self.format_string = QTextCharFormat()
+        self.format_comment = QTextCharFormat()
+        self.format_number = QTextCharFormat()
+
+        self.format_keyword.setForeground(QColor("#B042D8"))
+        self.format_string.setForeground(QColor("#C8645B"))
+        self.format_comment.setForeground(QColor("#318841"))
+        self.format_number.setForeground(QColor("#529E5E"))
+
+    def _setup_reg_exp(self):
+        """ 設定正規表達式 """
+        keywords = ["class", "def", "return", "pass", "lambda", "import", "from", 
+                    "if", "elif", "else", "for", "while", "continue", "break", 
+                    "True", "False", "None", "and", "or", "not","in", "is", 
+                    "try", "except", "finally", "raise", "with", "as", 
+                    "global", "yield", "del", "assert", "nonlocal"]
+        # import keywords | keyword.kwlist
+        keywords_str = r'\b(' + '|'.join(keywords) + r')\b'
+        self.pattern_keywords = QRegExp(keywords_str)
+        self.pattern_string = QRegExp(r"'[^']*'")
+        self.pattern_comment = QRegExp(r"#[^\n]*")
+        self.pattern_number = QRegExp(r"\b[0-9]+\b")
+        # str
+        self.pattern_double = QRegExp(r"'[^']*'")
+        self.pattern_single = QRegExp(r'"[^"]*"')
+
+    def _setup_rules(self):
+        """ 設定規則 """
+        self.rules.append((self.pattern_keywords, self.format_keyword))
+        self.rules.append((self.pattern_comment, self.format_comment))
+        self.rules.append((self.pattern_number, self.format_number))
+        # str
+        self.rules.append((self.pattern_single, self.format_string))
+        self.rules.append((self.pattern_double, self.format_string))
+
+    def highlightBlock(self, text):
+        """ 對每一行文字進行高亮處理 """
+        self.setCurrentBlockState(self.NO_STATE)
+        # 找匹配項目
+        for pattern, format in self.rules:
+            index = pattern.indexIn(text)
+            while index >= 0:
+                # 處理文字
+                length = pattern.matchedLength()
+                self.setFormat(index, length, format)
+                # 下一個
+                index = pattern.indexIn(text, index + length)
+
 class MainWindow(QMainWindow):
     def __init__(self, file_to_open: str|None = None):
         super().__init__()
@@ -562,6 +629,8 @@ class MainWindow(QMainWindow):
         set_theme_light_action = QAction("Toggle To Light Theme", self)     # 淺色模式
         set_theme_origin_action = QAction("Toggle To Original Theme", self) # 作業系統原生視窗
 
+        close_tab_action = QAction("Close Current Tab", self) # 關閉分頁
+
         # 連接事件
         change_password_action.triggered.connect(self.change_master_password)
 
@@ -585,6 +654,8 @@ class MainWindow(QMainWindow):
         set_theme_light_action.triggered.connect(self.action_set_theme_light)
         set_theme_origin_action.triggered.connect(self.action_set_theme_origin)
 
+        close_tab_action.triggered.connect(self.action_close_tab)
+
         # 快捷鍵
         new_action.setShortcut("Ctrl+T")
         open_action.setShortcut("Ctrl+Shift+O")
@@ -598,6 +669,8 @@ class MainWindow(QMainWindow):
         find_action.setShortcut("Ctrl+F")
         replace_action.setShortcut("Ctrl+H")
 
+        close_tab_action.setShortcut("Ctrl+W")
+
         # 新增 action 至 menubar
         file_menu.addAction(change_password_action)
         file_menu.addSeparator()
@@ -610,6 +683,8 @@ class MainWindow(QMainWindow):
         file_menu.addAction(save_crypted_action)
         file_menu.addAction(save_as_action)
         file_menu.addAction(save_as_crypted_action)
+        file_menu.addSeparator()
+        file_menu.addAction(close_tab_action)
 
         edit_menu.addAction(find_action)
         edit_menu.addAction(replace_action)
@@ -623,25 +698,32 @@ class MainWindow(QMainWindow):
         view_menu.addAction(set_theme_origin_action)
 
     @property
-    def tab(self) -> Tab: 
+    def tab(self) -> Tab:
         return self.tab_list[self.tab_index]
     @tab.setter
     def tab(self, val: Tab):
         self.tab_list[self.tab_index] = val
 
     @property
-    def text_edit(self) -> QPlainTextEdit: 
+    def text_edit(self) -> QPlainTextEdit:
         return self.tab.text_edit
     @text_edit.setter
     def text_edit(self, val: QPlainTextEdit):
         self.tab.text_edit = val
     
     @property
-    def file_path(self) -> str | None: 
+    def file_path(self) -> str | None:
         return self.tab.file_path
     @file_path.setter
     def file_path(self, val: str | None):
         self.tab.file_path = val
+
+    @property
+    def highlighter(self) -> QSyntaxHighlighter | None:
+        return self.tab.highlighter
+    @highlighter.setter
+    def highlighter(self, val: QSyntaxHighlighter | None):
+        self.tab.highlighter = val
 
     def focus_text_edit(self):
         """ active """
@@ -719,6 +801,7 @@ class MainWindow(QMainWindow):
         # 切分頁
         self.tabs.addTab(text_edit, "")
         self.tabs.setCurrentIndex(new_index)
+        self.tab_index = new_index
         self.tab.update_title()
         self.text_edit.zoomIn(3)
 
@@ -747,14 +830,24 @@ class MainWindow(QMainWindow):
             return False
         # 解密/顯示/提示
         try: 
+            # Tab
             plain_text = yoAES.decrypt(encrypted_data, self.password) if decrypt else encrypted_data
             self.text_edit.setPlainText(plain_text)
+            # 高亮
+            extension = str(os.path.splitext(file_path)[1])
+            if extension == ".py" or extension == ".ipynb":
+                self.highlighter = PyHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
+            else: self.highlighter = None
+            # 提示
             self.statusBar().clearMessage() # pyright: ignore[reportOptionalMemberAccess]
             QTimer.singleShot(50, msg)
             self.file_path = file_path
-            self.tab.is_dirty = False # 寫在這裡確保只有成功開啟時才更新
-            self.tab.update_title()
             self.tab.is_crypt = decrypt
+            # 強制更新is_dirty
+            QApplication.processEvents()
+            self.tab.is_dirty = False
+            self.tab.update_title()
+            self.focus_text_edit()
             return True
         except Exception as e: 
             QMessageBox.critical(self, "解密錯誤", f"解密檔案 {file_name} 失敗: {e}")
@@ -955,7 +1048,7 @@ class MainWindow(QMainWindow):
         del confirm_password_str # 清除臨時 str 變數的引用
         
         # 更新 Files 內所有 txt 檔案
-        for fname in os.listdir(os.path.join(filedirname, "Files")):
+        for fname in os.listdir(os.path.join(filedirname, "Files")): # pyright: ignore[reportArgumentType]
             if (not fname.endswith(".txt")) or (fname == password_file_name): 
                 continue
             fpath = os.path.join(filedirname, "Files", fname)
@@ -1073,7 +1166,7 @@ class MainWindow(QMainWindow):
                 QPlainTextEdit { color: black; background-color: white; }
                 QDockWidget { color: black; background-color: #ECECEC; }
             """)
-            QApplication.setStyle(QStyleFactory.create('Fusion')) # +這行更像light
+            QApplication.setStyle(QStyleFactory.create("Fusion")) # +這行更像light
             # qdarktheme的主題
         else: qdarktheme.setup_theme(self.theme.value)
 
@@ -1092,6 +1185,10 @@ class MainWindow(QMainWindow):
         self.theme = Theme.origin
         self._set_theme()
 
+    def action_close_tab(self):
+        """ 關閉當前分頁 """
+        self._handle_tab_close(self.tab_index)
+
     def closeEvent(self, a0):
         """ 關閉時的動作 """
         if a0 is None: raise ValueError("in closeEvent: a0 is None")
@@ -1105,6 +1202,7 @@ class MainWindow(QMainWindow):
         a0.accept()
 
 # pyinstaller --onefile --windowed --icon=main_icon.ico main.py
+# pyinstaller --onedir --windowed --icon=main_icon.ico main.py
 if __name__ == "__main__":
     with Code_Timer("init"):
         file_to_open = None
