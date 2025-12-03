@@ -8,8 +8,7 @@ from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32, "utf-8")
 
 encoding = "utf-8"
-password_file_name = "password.txt"
-password_file = resource_path(password_file_name)
+password_file = resource_path("password.txt")
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
 window: "MainWindow"
@@ -1049,7 +1048,7 @@ class MainWindow(QMainWindow):
         
         # 更新 Files 內所有 txt 檔案
         for fname in os.listdir(os.path.join(filedirname, "Files")): # pyright: ignore[reportArgumentType]
-            if (not fname.endswith(".txt")) or (fname == password_file_name): 
+            if (not fname.endswith(".txt")) or (fname == "password.txt"): 
                 continue
             fpath = os.path.join(filedirname, "Files", fname)
             try:
