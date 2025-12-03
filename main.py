@@ -1,6 +1,6 @@
 import sys, os, qdarktheme # pyright: ignore[reportMissingImports]
 from enum import Enum
-from abc import abstractmethod, ABC
+from abc import abstractmethod, ABC, ABCMeta
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt5.QtCore import QTimer, Qt, QRegExp
 from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter, QTextCharFormat, QColor, QFont
@@ -456,11 +456,18 @@ class ReplaceBar(FR_Bar):
         super().init_replace_bar()
         self.main_layout.addStretch(1)
 
-class Highlighter(ABC, QSyntaxHighlighter):
+class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): pass # pyright: ignore[reportGeneralTypeIssues]
+
+class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     # 多行字串標記
-    NO_STATE = 0                  # None
-    STATE_TRIPLE_DOUBLE_QUOTE = 1 # """ """
-    STATE_TRIPLE_SINGLE_QUOTE = 2 # ''' '''
+    No_State = 0                  # None
+    State_Triple_Double_Quote = 1 # """ """
+    State_Triple_Single_Quote = 2 # ''' '''
+    # 顏色
+    Brown = QColor("#D27067")
+    Green = QColor("#529E5E")
+    Dark_Blue = QColor("#AB4ECC")
+    Green_Brown = QColor("#3A934A")
     
     def __init__(self, parent_document: QTextDocument):
         super().__init__(parent_document)
@@ -480,7 +487,7 @@ class Highlighter(ABC, QSyntaxHighlighter):
     def _setup_rules(self): pass
     
     @abstractmethod
-    def highlightBlock(self): pass
+    def highlightBlock(self, text: str| None): pass
 
 class PyHighlighter(Highlighter):
     def __init__(self, parent_document: QTextDocument):
@@ -493,10 +500,10 @@ class PyHighlighter(Highlighter):
         self.format_comment = QTextCharFormat()
         self.format_number = QTextCharFormat()
 
-        self.format_keyword.setForeground(QColor("#B042D8"))
-        self.format_string.setForeground(QColor("#C8645B"))
-        self.format_comment.setForeground(QColor("#318841"))
-        self.format_number.setForeground(QColor("#529E5E"))
+        self.format_keyword.setForeground(self.Dark_Blue)
+        self.format_string.setForeground(self.Brown)
+        self.format_comment.setForeground(self.Green_Brown)
+        self.format_number.setForeground(self.Green)
 
     def _setup_reg_exp(self):
         """ 設定正規表達式 """
@@ -524,9 +531,9 @@ class PyHighlighter(Highlighter):
         self.rules.append((self.pattern_single, self.format_string))
         self.rules.append((self.pattern_double, self.format_string))
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text: str| None):
         """ 對每一行文字進行高亮處理 """
-        self.setCurrentBlockState(self.NO_STATE)
+        self.setCurrentBlockState(self.No_State)
         # 找匹配項目
         for pattern, format in self.rules:
             index = pattern.indexIn(text)
@@ -579,7 +586,7 @@ class MainWindow(QMainWindow):
         if view_menu is None: raise TypeError("view_menu is None")
 
         # 輸入框/提示(setStatusBar)
-        self.text_edit.zoomIn(3)                                # 預設放大3次
+        self.text_edit.zoomIn(4)                                # 預設放大4次
         self.tabs = QTabWidget()                                # 分頁欄建立
         self.tabs.setTabsClosable(True)                         # 可以關閉
         self.tabs.addTab(self.text_edit, "")                    # 加入第一個分頁
@@ -680,6 +687,7 @@ class MainWindow(QMainWindow):
         auto_save_action.setShortcut("Ctrl+S")
 
         zoom_in_action.setShortcut("Ctrl++")
+        zoom_in_action.setShortcut("Ctrl+=")   # 非數字鍵的"+"
         zoom_out_action.setShortcut("Ctrl+-")
         reset_zoom_action.setShortcut("Ctrl+0")
 
@@ -820,7 +828,7 @@ class MainWindow(QMainWindow):
         self.tabs.setCurrentIndex(new_index)
         self.tab_index = new_index
         self.tab.update_title()
-        self.text_edit.zoomIn(3)
+        self.text_edit.zoomIn(4)
 
     def _read_file_from(self, file_path: str, hint: str, decrypt: bool = False) -> bool:
         """ 讀取指定位置的檔案 回傳是否成功 """
