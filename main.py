@@ -1,5 +1,6 @@
 import sys, os, qdarktheme # pyright: ignore[reportMissingImports]
 from enum import Enum
+from abc import abstractmethod, ABC
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt5.QtCore import QTimer, Qt, QRegExp
 from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter, QTextCharFormat, QColor, QFont
@@ -455,11 +456,12 @@ class ReplaceBar(FR_Bar):
         super().init_replace_bar()
         self.main_layout.addStretch(1)
 
-class PyHighlighter(QSyntaxHighlighter):
+class Highlighter(ABC, QSyntaxHighlighter):
     # 多行字串標記
     NO_STATE = 0                  # None
     STATE_TRIPLE_DOUBLE_QUOTE = 1 # """ """
     STATE_TRIPLE_SINGLE_QUOTE = 2 # ''' '''
+    
     def __init__(self, parent_document: QTextDocument):
         super().__init__(parent_document)
         self.rules: list[tuple[QRegExp, QTextCharFormat]] = []
@@ -467,6 +469,22 @@ class PyHighlighter(QSyntaxHighlighter):
         self._setup_formats()
         self._setup_reg_exp()
         self._setup_rules()
+    
+    @abstractmethod
+    def _setup_formats(self): pass
+    
+    @abstractmethod
+    def _setup_reg_exp(self): pass
+    
+    @abstractmethod
+    def _setup_rules(self): pass
+    
+    @abstractmethod
+    def highlightBlock(self): pass
+
+class PyHighlighter(Highlighter):
+    def __init__(self, parent_document: QTextDocument):
+        super().__init__(parent_document)
 
     def _setup_formats(self):
         """ 設定樣式 """

@@ -66,4 +66,3 @@ if errorlevel 1 (
 )
 
 :eof
-pause
