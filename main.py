@@ -640,7 +640,7 @@ class MainWindow(QMainWindow):
         save_crypted_action = QAction("Save-Crypted", self)       # 儲存成加密檔案
         save_as_action = QAction("Save as", self)                 # 另存為普通檔案
         save_as_crypted_action = QAction("Save as-Crypted", self) # 另存為加密檔案
-        auto_save_action = QAction("auto_save", self)             # 自動化儲存
+        auto_save_action = QAction("Auto_save", self)             # 自動化儲存
 
         zoom_in_action = QAction("Zoom In", self)                 # 字體放大
         zoom_out_action = QAction("Zoom Out", self)               # 字體縮小
@@ -686,8 +686,8 @@ class MainWindow(QMainWindow):
         open_crypted_action.setShortcut("Ctrl+O")
         auto_save_action.setShortcut("Ctrl+S")
 
-        zoom_in_action.setShortcut("Ctrl++")
         zoom_in_action.setShortcut("Ctrl+=")   # 非數字鍵的"+"
+        zoom_in_action.setShortcut("Ctrl++")
         zoom_out_action.setShortcut("Ctrl+-")
         reset_zoom_action.setShortcut("Ctrl+0")
 
