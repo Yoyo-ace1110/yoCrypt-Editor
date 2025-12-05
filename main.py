@@ -21,6 +21,7 @@ def _clear_dialog_input(dialog: QDialog):
         widget.clear()
 
 class PasswordPrompt(QDialog):
+    """ Verifying Master Password """
     def __init__(self):
         super().__init__()
         self.setWindowTitle("主密碼驗證")
@@ -84,11 +85,13 @@ class PasswordPrompt(QDialog):
         self.button.setEnabled(True)
 
 class Theme(Enum):
+    """ Color Themes """
     dark = "dark"
     light = "light"
     origin = "origin"
 
 class Tab:
+    """ Information of a Tab """
     def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, file_path: str|None = None, 
                  is_dirty: bool = False, is_crypt: bool = False, highlighter: QSyntaxHighlighter|None = None):
         self.main = main_window
@@ -114,6 +117,7 @@ class Tab:
         self.main.tabs.setTabText(self.index, final_title)
 
 class FR_Bar(QWidget):
+    """ Base of Find and Replace """
     def init(self, main_window: "MainWindow"):
         super().__init__(main_window)
         # 布局
@@ -444,12 +448,14 @@ class FR_Bar(QWidget):
         self.update_search_results()
 
 class FindBar(FR_Bar):
+    """ Find function """
     def __init__(self, main_window: "MainWindow"):
         super().init(main_window)
         super().init_find_bar()
         self.main_layout.addStretch(1)
 
 class ReplaceBar(FR_Bar):
+    """ Replace function """
     def __init__(self, main_window: "MainWindow"):
         super().init(main_window)
         super().init_find_bar()
@@ -459,7 +465,7 @@ class ReplaceBar(FR_Bar):
 class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): pass # pyright: ignore[reportGeneralTypeIssues]
 
 class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
-    # 多行字串標記
+    """ Base of all Highlighters """
     No_State = 0                  # None
     State_Triple_Double_Quote = 1 # """ """
     State_Triple_Single_Quote = 2 # ''' '''
@@ -490,6 +496,7 @@ class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     def highlightBlock(self, text: str| None): pass
 
 class PyHighlighter(Highlighter):
+    """ Highlighter for Python """
     def __init__(self, parent_document: QTextDocument):
         super().__init__(parent_document)
 
@@ -544,7 +551,13 @@ class PyHighlighter(Highlighter):
                 # 下一個
                 index = pattern.indexIn(text, index + length)
 
+class MdHighlighter(Highlighter):
+    """ Highlighter for Python """
+    def __init__(self, parent_document: QTextDocument):
+        super().__init__(parent_document)
+
 class MainWindow(QMainWindow):
+    """ Main window of this application """
     def __init__(self, file_to_open: str|None = None):
         super().__init__()
         # 建立視窗
