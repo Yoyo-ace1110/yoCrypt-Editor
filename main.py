@@ -132,7 +132,7 @@ class Tab:
         font.setPointSize(self.default_point_size)
         self.text_edit.setFont(font)
 
-    def update_font_size(self):
+    def update_zoom(self):
         """ 同步字型大小 """
         self.reset_zoom()
         delta = default_font_size-self.font_size
@@ -1237,6 +1237,7 @@ class MainWindow(QMainWindow):
             QApplication.setStyle(QStyleFactory.create("Fusion")) # +這行更像light
             # qdarktheme的主題
         else: qdarktheme.setup_theme(self.theme.value)
+        self.tab.update_zoom()
 
     def action_set_theme_dark(self):
         """ 切換到深色主題 """
