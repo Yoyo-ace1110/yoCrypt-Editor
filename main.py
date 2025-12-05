@@ -13,7 +13,7 @@ password_file = resource_path("password.txt")
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
 window: "MainWindow"
-count = 0
+default_font_size = 4
 
 def _clear_dialog_input(dialog: QDialog):
     """ 清除QDialog的內容 """
@@ -92,15 +92,20 @@ class Theme(Enum):
 
 class Tab:
     """ Information of a Tab """
-    def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, file_path: str|None = None, 
-                 is_dirty: bool = False, is_crypt: bool = False, highlighter: QSyntaxHighlighter|None = None):
+    def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, 
+                 file_path: str|None = None, is_dirty: bool = False, is_crypt: bool = False, 
+                 highlighter: QSyntaxHighlighter|None = None, font_size: int = default_font_size):
         self.main = main_window
         self.index = index
         self.text_edit = text_edit
         self.file_path = file_path
         self.is_dirty = is_dirty
         self.is_crypt = is_crypt
+        self.font_size = font_size
         self.highlighter = highlighter
+        # 字型大小
+        self.default_font = self.text_edit.font()               # 預設字體
+        self.default_point_size = self.default_font.pointSize() # 紀錄預設大小
         # 綁定事件
         self.text_edit.textChanged.connect(self._handle_text_change)
 
@@ -109,6 +114,31 @@ class Tab:
         if self.is_dirty: return
         self.is_dirty = True
         self.update_title()
+
+    def zoom_in(self, size: int = 1):
+        """ 放大字體 """
+        self.font_size += size
+        self.text_edit.zoomIn(size)
+    
+    def zoom_out(self, size: int = 1):
+        """ 縮小字體 """
+        self.font_size -= size
+        self.text_edit.zoomOut(size)
+
+    def reset_zoom(self):
+        """ 還原預設字體大小 """
+        self.font_size = default_font_size
+        font = self.text_edit.font()
+        font.setPointSize(self.default_point_size)
+        self.text_edit.setFont(font)
+
+    def update_font_size(self):
+        """ 同步字型大小 """
+        self.reset_zoom()
+        delta = default_font_size-self.font_size
+        if delta == 0: return
+        elif delta > 0: self.zoom_in(delta)
+        else: self.zoom_out(-delta)
 
     def update_title(self):
         """ 更新title """
@@ -462,7 +492,8 @@ class ReplaceBar(FR_Bar):
         super().init_replace_bar()
         self.main_layout.addStretch(1)
 
-class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): pass # pyright: ignore[reportGeneralTypeIssues]
+class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta):  # pyright: ignore[reportGeneralTypeIssues]
+    pass
 
 class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     """ Base of all Highlighters """
@@ -606,9 +637,6 @@ class MainWindow(QMainWindow):
 
         self.tabs.currentChanged.connect(self._handle_tab_change)   # 切換分頁事件
         self.tabs.tabCloseRequested.connect(self._handle_tab_close) # 關閉分頁事件
-
-        self.default_font = self.text_edit.font()               # 預設字體
-        self.default_point_size = self.default_font.pointSize() # 紀錄預設大小
         
         # 尋找/取代 layout
         self.FR_dock = QDockWidget("尋找/取代", self)  # 浮動視窗
@@ -762,6 +790,10 @@ class MainWindow(QMainWindow):
     @highlighter.setter
     def highlighter(self, val: QSyntaxHighlighter | None):
         self.tab.highlighter = val
+
+    @property
+    def font_size(self):
+        return self.tab.font_size
 
     def focus_text_edit(self):
         """ active """
@@ -1126,7 +1158,7 @@ class MainWindow(QMainWindow):
 
     def action_zoom_in(self):
         """ 字體放大 """
-        self.text_edit.zoomIn(1)
+        self.tab.zoom_in(1)
 
     def action_zoom_out(self):
         """ 字體縮小 """
@@ -1134,9 +1166,7 @@ class MainWindow(QMainWindow):
     
     def action_zoom_reset(self):
         """ 還原預設字體大小 """
-        font = self.text_edit.font()
-        font.setPointSize(self.default_point_size)
-        self.text_edit.setFont(font)
+        self.tab.reset_zoom()
 
     def _set_FR_pos(self):
         """ 動態計算 尋找/取代框 的位置 """
