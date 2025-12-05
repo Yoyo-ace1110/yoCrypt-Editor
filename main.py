@@ -129,7 +129,7 @@ class Tab:
         """ 還原預設字體大小 """
         self.font_size = default_font_size
         font = self.text_edit.font()
-        font.setPointSize(self.default_point_size)
+        font.setPointSize(self.font_size)
         self.text_edit.setFont(font)
 
     def update_zoom(self):
@@ -604,6 +604,7 @@ class MainWindow(QMainWindow):
         self.init_Tab()
         self.init_ui()
         self._set_theme()
+        self.tab.reset_zoom()
         self.focus_text_edit()
         # 支援直接開啟檔案
         if not self._handle_external_file(file_to_open if file_to_open else welcome_file):
@@ -630,7 +631,6 @@ class MainWindow(QMainWindow):
         if view_menu is None: raise TypeError("view_menu is None")
 
         # 輸入框/提示(setStatusBar)
-        self.text_edit.zoomIn(4)                                # 預設放大4次
         self.tabs = QTabWidget()                                # 分頁欄建立
         self.tabs.setTabsClosable(True)                         # 可以關閉
         self.tabs.addTab(self.text_edit, "")                    # 加入第一個分頁
