@@ -3,7 +3,8 @@ from enum import Enum
 from abc import abstractmethod, ABCMeta
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt5.QtCore import QTimer, Qt, QRegExp
-from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter, QTextCharFormat, QColor, QFont
+from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter
+from PyQt5.QtGui import QTextCharFormat, QColor, QFont, QKeySequence
 from yotools200.yoCrypt import yoCrypt_init, hash_password, verify_password, yoAES
 from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32, "utf-8")
@@ -995,7 +996,7 @@ class MainWindow(QMainWindow):
         open_crypted_action.setShortcut("Ctrl+O")
         auto_save_action.setShortcut("Ctrl+S")
 
-        zoom_in_action.setShortcut("Ctrl+=")   # 非數字鍵的"+"
+        zoom_in_action.setShortcuts(["Ctrl+=", "Ctrl+Plus", "Ctrl+KeypadPlus"])
         zoom_in_action.setShortcut("Ctrl++")
         zoom_out_action.setShortcut("Ctrl+-")
         reset_zoom_action.setShortcut("Ctrl+0")
