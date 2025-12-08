@@ -540,8 +540,8 @@ class PyHighlighter(Highlighter):
     """ Highlighter for Python """
     def __init__(self, parent_document: QTextDocument):
         self.line: list[None|QRegExp]
-        self.setCurrentBlockState(self.No_State)
         super().__init__(parent_document)
+        self.setCurrentBlockState(self.No_State)
 
     def _format_line(self, Index, Length, Format, force = True):
         """ 顏色緩衝區 """
@@ -886,7 +886,6 @@ class MainWindow(QMainWindow):
         file_menu = menubar.addMenu("File")
         edit_menu = menubar.addMenu("Edit")
         view_menu = menubar.addMenu("View")
-        # 避免 _menu is None
         if file_menu is None: raise TypeError("file_menu is None")
         if edit_menu is None: raise TypeError("edit_menu is None")
         if view_menu is None: raise TypeError("view_menu is None")
@@ -933,16 +932,16 @@ class MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar())
 
         # 建立 QAction
-        change_password_action = QAction("Change Password", self) # 更改主密碼
+        change_password_action = QAction("Change Master Password", self) # 更改主密碼
 
         new_action = QAction("New", self)                         # 新檔案
         open_action = QAction("Open", self)                       # 開啟普通檔案
-        open_crypted_action = QAction("Open-Crypted", self)       # 開啟加密檔案
+        open_crypted_action = QAction("Open Crypted", self)       # 開啟加密檔案
         save_action = QAction("Save", self)                       # 儲存成普通檔案
-        save_crypted_action = QAction("Save-Crypted", self)       # 儲存成加密檔案
+        save_crypted_action = QAction("Save Crypted", self)       # 儲存成加密檔案
         save_as_action = QAction("Save as", self)                 # 另存為普通檔案
-        save_as_crypted_action = QAction("Save as-Crypted", self) # 另存為加密檔案
-        auto_save_action = QAction("Auto_save", self)             # 自動化儲存
+        save_as_crypted_action = QAction("Save as Crypted", self) # 另存為加密檔案
+        auto_save_action = QAction("Auto Save", self)             # 自動化儲存
 
         zoom_in_action = QAction("Zoom In", self)                 # 字體放大
         zoom_out_action = QAction("Zoom Out", self)               # 字體縮小
@@ -956,6 +955,9 @@ class MainWindow(QMainWindow):
         set_theme_origin_action = QAction("Toggle To Original Theme", self) # 作業系統原生視窗
 
         close_tab_action = QAction("Close Current Tab", self) # 關閉分頁
+        
+        auto_highlight_action = QAction("Auto Highlight", self) # 自動判斷檔案類型並高亮
+        highlight_as_python_action = QAction("Highlight as Python Code", self) # 視為python高亮
 
         # 連接事件
         change_password_action.triggered.connect(self.change_master_password)
@@ -981,6 +983,9 @@ class MainWindow(QMainWindow):
         set_theme_origin_action.triggered.connect(self.action_set_theme_origin)
 
         close_tab_action.triggered.connect(self.action_close_tab)
+        
+        auto_highlight_action.triggered.connect(self.action_auto_highlight)
+        highlight_as_python_action.triggered.connect(self.action_highlight_as_python)
 
         # 快捷鍵
         new_action.setShortcut("Ctrl+T")
@@ -1015,6 +1020,9 @@ class MainWindow(QMainWindow):
 
         edit_menu.addAction(find_action)
         edit_menu.addAction(replace_action)
+        edit_menu.addSeparator()
+        edit_menu.addAction(auto_highlight_action)
+        edit_menu.addAction(highlight_as_python_action)
 
         view_menu.addAction(zoom_in_action)
         view_menu.addAction(zoom_out_action)
@@ -1522,6 +1530,16 @@ class MainWindow(QMainWindow):
     def action_close_tab(self):
         """ 關閉當前分頁 """
         self._handle_tab_close(self.tab_index)
+
+    def action_auto_highlight(self):
+        """ 自動判斷文件格式並高亮 """
+        if self.file_path is None: 
+            return self._auto_highlight("untitled.txt")
+        self._auto_highlight(self.file_path)
+        
+    def action_highlight_as_python(self):
+        """ 當作python source file編輯 """
+        self.highlighter = PyHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
 
     def closeEvent(self, a0):
         """ 關閉時的動作 """
