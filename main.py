@@ -510,6 +510,7 @@ class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     State_Triple_Double = 3 # """ """
     State_Triple_Single = 4 # ''' '''
     # 顏色
+    Blue = QColor("#405FFE")
     Brown = QColor("#D27067")
     Green = QColor("#65B872")
     Dark_Blue = QColor("#AB4ECC")
@@ -692,7 +693,87 @@ class PyHighlighter(Highlighter):
             self.setFormat(i, 1, f)
 
 class MdHighlighter(Highlighter):
-    """ Highlighter for Python """
+    """ Highlighter for Markdown """
+    def __init__(self, parent_document: QTextDocument):
+        self.header_rules: list[tuple[QRegExp, QTextCharFormat]] = []
+        self.format_headers: list[QTextCharFormat] = []
+        self.header_size = [1, 2, 3, 4, 5, 6]
+        super().__init__(parent_document)
+
+    def _setup_formats(self):
+        """ 設定樣式 """
+        self.format_bold = QTextCharFormat()
+        self.format_italic = QTextCharFormat()
+        self.format_subscript = QTextCharFormat()
+        self.format_superscript = QTextCharFormat()
+        self.format_bold.setFontWeight(QFont.Weight.Bold) # 粗體
+        self.format_italic.setFontItalic(True)            # 斜體
+        # 上下標
+        self.format_subscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSubScript)
+        self.format_superscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSuperScript)
+        
+        """ 標頭
+        本來的程式:
+            self.format_H2 = QTextCharFormat()
+            self.format_H2.setForeground(self.Dark_Blue)
+            self.format_H2.setFontWeight(QFont.Bold)
+            self.format_H2.setFontPointSize(16)
+        """
+        for i in self.header_size:
+            self.__dict__[f"format_H{i}"] = QTextCharFormat()
+            # 簡化表達
+            format_Hi: QTextCharFormat = self.__dict__[f"format_H{i}"]
+            format_Hi.setForeground(self.Blue)
+            format_Hi.setFontWeight(QFont.Weight.Bold)
+            self.format_headers.append(format_Hi)
+    
+    def _setup_reg_exp(self):
+        """ 設定正規表達式 """
+        # 標頭
+        for i in self.header_size:
+            self.__dict__[f"pattern_H{i}"] = QRegExp(r"^" + "#"*i + r"\s")
+        # 粗體
+        self.pattern_bold1 = QRegExp(r"\*\*(\w+)\*\*")
+        self.pattern_bold2 = QRegExp(r"\_\_(\w+)\_\_")
+        # 斜體
+        self.pattern_italic1 = QRegExp(r"\*(\w+)\*")
+        self.pattern_italic2 = QRegExp(r"\_(\w+)\_")
+        # 上標/下標
+        self.pattern_subscript = QRegExp(r"\~(.+?)\~")
+        self.pattern_superscript = QRegExp(r"\^(.+?)\^")
+        
+    def _setup_rules(self):
+        """ 設定規則 """
+        self.rules.append((self.pattern_bold1, self.format_bold))
+        self.rules.append((self.pattern_bold2, self.format_bold))
+        self.rules.append((self.pattern_italic1, self.format_italic))
+        self.rules.append((self.pattern_italic2, self.format_italic))
+        self.rules.append((self.pattern_subscript, self.format_subscript))
+        self.rules.append((self.pattern_superscript, self.format_superscript))
+        # headers
+        for i in self.header_size:
+            self.header_rules.append((self.__dict__[f"pattern_H{i}"], self.__dict__[f"format_H{i}"]))
+
+    def highlightBlock(self, text: str | None):
+        """ 對每一行文字進行高亮處理 """
+        if text is None: return
+        # 一般
+        for pattern, format in self.rules:
+            index = pattern.indexIn(text)
+            while index >= 0:
+                # 處理文字
+                length = pattern.matchedLength()
+                self.setFormat(index, length, format)
+                index = pattern.indexIn(text, index + length)
+        # Heading
+        for pattern, format in self.header_rules:
+            index = pattern.indexIn(text)
+            if index == -1: continue
+            self.setFormat(index, len(text)-index, format)
+
+# 預覽Markdown
+class MdPreviewer(Highlighter): # 🖼️
+    """ Previewer for Markdown """
     def __init__(self, parent_document: QTextDocument):
         self.format_headers: list[QTextCharFormat] = []
         self.header_size = [1, 2, 3, 4, 5, 6]
