@@ -773,7 +773,7 @@ class MdHighlighter(Highlighter):
             self.setFormat(index, len(text)-index, format)
 
 # 預覽Markdown
-class MdPreviewer(Highlighter): # 🖼️
+class MdPreviewer(Highlighter): # 📸🖼️
     """ Previewer for Markdown """
     def __init__(self, parent_document: QTextDocument):
         self.format_headers: list[QTextCharFormat] = []
