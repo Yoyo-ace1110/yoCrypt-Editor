@@ -956,7 +956,8 @@ class MainWindow(QMainWindow):
 
         close_tab_action = QAction("Close Current Tab", self) # 關閉分頁
         
-        auto_highlight_action = QAction("Auto Highlight", self) # 自動判斷檔案類型並高亮
+        auto_highlight_action = QAction("Auto Highlight", self)                # 自動判斷檔案類型並高亮
+        disable_highlight_action = QAction("Disable Highlight", self)          # 不要高亮
         highlight_as_python_action = QAction("Highlight as Python Code", self) # 視為python高亮
 
         # 連接事件
@@ -985,6 +986,7 @@ class MainWindow(QMainWindow):
         close_tab_action.triggered.connect(self.action_close_tab)
         
         auto_highlight_action.triggered.connect(self.action_auto_highlight)
+        disable_highlight_action.triggered.connect(self.action_disable_highlight)
         highlight_as_python_action.triggered.connect(self.action_highlight_as_python)
 
         # 快捷鍵
@@ -1022,6 +1024,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(replace_action)
         edit_menu.addSeparator()
         edit_menu.addAction(auto_highlight_action)
+        edit_menu.addAction(disable_highlight_action)
         edit_menu.addAction(highlight_as_python_action)
 
         view_menu.addAction(zoom_in_action)
@@ -1536,7 +1539,10 @@ class MainWindow(QMainWindow):
         if self.file_path is None: 
             return self._auto_highlight("untitled.txt")
         self._auto_highlight(self.file_path)
-        
+    
+    def action_disable_highlight(self):
+        self.highlighter = None
+    
     def action_highlight_as_python(self):
         """ 當作python source file編輯 """
         self.highlighter = PyHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
