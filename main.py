@@ -3,8 +3,8 @@ from enum import Enum
 from abc import abstractmethod, ABCMeta
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt5.QtCore import QTimer, Qt, QRegExp
-from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter
-from PyQt5.QtGui import QTextCharFormat, QColor, QFont, QKeySequence
+from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter, QKeyEvent
+from PyQt5.QtGui import QTextCharFormat, QColor, QFont
 from yotools200.yoCrypt import yoCrypt_init, hash_password, verify_password, yoAES
 from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32, "utf-8")
@@ -97,7 +97,7 @@ class Theme(Enum):
 # 分頁
 class Tab:
     """ Information of a Tab """
-    def __init__(self, main_window: "MainWindow", index: int, text_edit: QPlainTextEdit, 
+    def __init__(self, main_window: "MainWindow", index: int, text_edit: "CodeEditor", 
                  file_path: str|None = None, is_dirty: bool = False, is_crypt: bool = False, 
                  highlighter: QSyntaxHighlighter|None = None):
         self.main = main_window
@@ -848,6 +848,21 @@ class MdPreviewer(Highlighter): # 📸🖼️
                 # 下一個
                 index = pattern.indexIn(text, index + length)
 
+# Use this instead of QPlainTextEdit
+class CodeEditor(QPlainTextEdit):
+    def __init__(self, parent: QWidget|None = None):
+        super().__init__(parent=parent)
+        self.tab: str
+        self.set_tab()
+    
+    def set_tab(self, replace: str = "  "):
+        self.tab = replace
+
+    def keyPressEvent(self, e: QKeyEvent|None):
+        if e.key() == Qt.Key.Key_Tab: # pyright: ignore[reportOptionalMemberAccess]
+            self.insertPlainText(self.tab)
+        else: super().keyPressEvent(e)
+
 # 主視窗
 class MainWindow(QMainWindow):
     """ Main window of this application """
@@ -874,7 +889,7 @@ class MainWindow(QMainWindow):
 
     def init_Tab(self):
         """ 初始化self.Tab_list(含text_edit) """
-        text_edit = QPlainTextEdit(self) # 文字框建立
+        text_edit = CodeEditor(self) # 文字框建立
         temp_Tab = Tab(self, index=self.tab_index, text_edit=text_edit, file_path=None, is_dirty=False, is_crypt=False)
         self.tab_list: list[Tab] = [temp_Tab]
 
@@ -1044,10 +1059,10 @@ class MainWindow(QMainWindow):
         self.tab_list[self.tab_index] = val
 
     @property
-    def text_edit(self) -> QPlainTextEdit:
+    def text_edit(self) -> CodeEditor:
         return self.tab.text_edit
     @text_edit.setter
-    def text_edit(self, val: QPlainTextEdit):
+    def text_edit(self, val: CodeEditor):
         self.tab.text_edit = val
     
     @property
@@ -1198,7 +1213,7 @@ class MainWindow(QMainWindow):
         """ 新增一個分頁(檔案) """
         new_index = self.tabs.count()
         # 新分頁
-        text_edit = QPlainTextEdit(self)
+        text_edit = CodeEditor(self)
         new_tab = Tab(self, index=new_index, text_edit=text_edit, file_path=None, is_dirty=True, is_crypt=False)
         self.tab_list.append(new_tab)
         # 切分頁
@@ -1508,7 +1523,7 @@ class MainWindow(QMainWindow):
                 QPushButton:hover { background-color: #E6E6E6; }
                 QPushButton:pressed { background-color: #C0C0C0; border-style: inset; }
                 QLineEdit, QLabel { color: black; background-color: #ECECEC; }
-                QPlainTextEdit { color: black; background-color: white; }
+                CodeEditor { color: black; background-color: white; }
                 QDockWidget { color: black; background-color: #ECECEC; }
             """)
             QApplication.setStyle(QStyleFactory.create("Fusion")) # +這行更像light
