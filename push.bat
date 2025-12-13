@@ -1,6 +1,9 @@
 @echo off
 chcp 65001 > nul
 
+echo Copyright Notice
+echo © 2025 Yoyo-ace1110. All Rights Reserved.
+
 :: 讀取使用者輸入作為提交訊息
 set /p commit_msg="請輸入提交訊息 (Commit Message): "
 
