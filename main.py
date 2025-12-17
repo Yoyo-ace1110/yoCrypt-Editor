@@ -1092,7 +1092,7 @@ class MainWindow(QMainWindow):
         # 密碼已存在
         while (not self.password):
             login = PasswordPrompt()
-            if (login.exec_() != QDialog.Accepted) or (not login.success): return False
+            if (login.exec_() != QDialog.DialogCode.Accepted) or (not login.success): return False
             self.password = login.password
         return True
     
