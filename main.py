@@ -505,25 +505,29 @@ class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): # pyright: ignore[repo
 
 class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     """ Base of all Highlighters """
-    No_State = -1              # None
-    State_Single_Double = 1    # " "
-    State_Single_Single = 2    # ' '
-    State_Triple_Double = 3 # """ """
-    State_Triple_Single = 4 # ''' '''
-    # 顏色
-    Blue = QColor("#405FFE")
-    Brown = QColor("#D27067")
-    Green = QColor("#65B872")
-    Dark_Blue = QColor("#AB4ECC")
-    Green_Brown = QColor("#3A934A")
+    No_State = -1 # None
     
     def __init__(self, parent_document: QTextDocument):
         super().__init__(parent_document)
         self.rules: list[tuple[QRegExp, QTextCharFormat]] = []
         # 初始化函數
+        self._empty_QTextCharFormat()
         self._setup_formats()
         self._setup_reg_exp()
         self._setup_rules()
+    
+    def load_colors(self):
+        """ 載入顏色 """
+        self.Blue = QColor("#0550ae")
+        self.Gray = QColor("#6e7781")
+        self.Brown = QColor("#D27067")
+        self.Green = QColor("#65B872")
+        self.yellow = QColor("#e6e63b")
+        self.Dark_Blue = QColor("#AB4ECC")
+        self.Green_Brown = QColor("#3A934A")
+    
+    @abstractmethod
+    def _empty_QTextCharFormat(self): pass
     
     @abstractmethod
     def _setup_formats(self): pass
@@ -539,6 +543,11 @@ class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
 
 class PyHighlighter(Highlighter):
     """ Highlighter for Python """
+    State_Single_Double = 1    # " "
+    State_Single_Single = 2    # ' '
+    State_Triple_Double = 3 # """ """
+    State_Triple_Single = 4 # ''' '''
+    
     def __init__(self, parent_document: QTextDocument):
         self.line: list[None|QRegExp]
         super().__init__(parent_document)
@@ -610,13 +619,15 @@ class PyHighlighter(Highlighter):
         self._format_line(min_index, length, self.format_string)
         return (min_index+length, state)
 
-    def _setup_formats(self):
-        """ 設定樣式 """
+    def _empty_QTextCharFormat(self):
+        """ 空的樣式 """
         self.format_keyword = QTextCharFormat()
         self.format_string = QTextCharFormat()
         self.format_comment = QTextCharFormat()
         self.format_number = QTextCharFormat()
 
+    def _setup_formats(self):
+        """ 設定樣式 """
         self.format_keyword.setForeground(self.Dark_Blue)
         self.format_string.setForeground(self.Brown)
         self.format_comment.setForeground(self.Green_Brown)
@@ -696,86 +707,142 @@ class PyHighlighter(Highlighter):
 class MdHighlighter(Highlighter):
     """ Highlighter for Markdown """
     def __init__(self, parent_document: QTextDocument):
-        self.header_rules: list[tuple[QRegExp, QTextCharFormat]] = []
-        self.format_headers: list[QTextCharFormat] = []
-        self.header_size = [1, 2, 3, 4, 5, 6]
+        self.full_line_rules: list[tuple[QRegExp, QTextCharFormat]]
+        self.partial_rules: list[tuple[QRegExp, dict[int, QTextCharFormat]]]
+        self.inline_rules: list[tuple[QRegExp, QTextCharFormat]]
         super().__init__(parent_document)
+
+    def _empty_QTextCharFormat(self):
+        """ 空的樣式 """
+        self.format_bold = QTextCharFormat()
+        self.format_italic = QTextCharFormat()
+        self.format_superscript = QTextCharFormat()
+        self.format_subscript = QTextCharFormat()
+        self.format_highlight = QTextCharFormat()
+        self.format_header = QTextCharFormat()
+        self.format_quote = QTextCharFormat()
+        self.format_code_block = QTextCharFormat()
+        self.format_separator = QTextCharFormat()
+        self.format_string = QTextCharFormat()
+        self.format_link = QTextCharFormat()
+        self.format_strike_out = QTextCharFormat()
+        self.format_inline_code = QTextCharFormat()
 
     def _setup_formats(self):
         """ 設定樣式 """
-        self.format_bold = QTextCharFormat()
-        self.format_italic = QTextCharFormat()
-        self.format_subscript = QTextCharFormat()
-        self.format_superscript = QTextCharFormat()
-        self.format_blue = QtextCharFormat()
-        
-        self.format_bold.setFontWeight(QFont.Weight.Bold) # 粗體
-        self.format_italic.setFontItalic(True)            # 斜體
-        # 上下標
-        self.format_subscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSubScript)
-        self.format_superscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSuperScript)
-        
-        """ 標頭
-        本來的程式:
-            self.format_H2 = QTextCharFormat()
-            self.format_H2.setForeground(self.Dark_Blue)
-            self.format_H2.setFontWeight(QFont.Bold)
-            self.format_H2.setFontPointSize(16)
-        """
-        for i in self.header_size:
-            self.__dict__[f"format_H{i}"] = QTextCharFormat()
-            # 簡化表達
-            format_Hi: QTextCharFormat = self.__dict__[f"format_H{i}"]
-            format_Hi.setForeground(self.Blue)
-            format_Hi.setFontWeight(QFont.Weight.Bold)
-            self.format_headers.append(format_Hi)
-    
+        Bold = QFont.Weight.Bold
+        SubScript = QTextCharFormat.VerticalAlignment.AlignSubScript
+        SuperScript = QTextCharFormat.VerticalAlignment.AlignSuperScript
+        # 粗體
+        self.format_bold.setFontWeight(Bold)
+        # 斜體
+        self.format_italic.setFontItalic(True)
+        # 上標
+        self.format_superscript.setVerticalAlignment(SuperScript)
+        # 下標
+        self.format_subscript.setVerticalAlignment(SubScript)
+        # 螢光筆
+        self.format_highlight.setFontWeight(Bold)
+        self.format_highlight.setForeground(self.yellow)
+        # 標題/清單 (藍色+粗體)
+        self.format_header.setFontWeight(Bold)
+        self.format_header.setForeground(self.Blue)
+        # 引用 (灰色)
+        self.format_quote.setForeground(self.Gray)
+        # 列表 (藍色+粗體)
+        self.format_unordered = QTextCharFormat(self.format_header)
+        self.format_ordered = QTextCharFormat(self.format_header)
+        # 勾選清單
+        self.format_unfinished = QTextCharFormat(self.format_header)
+        self.format_finished = QTextCharFormat(self.format_header)
+        # 程式碼
+        # self.format_code_block
+        # 水平分隔線 (灰色+粗體)
+        self.format_separator.setFontWeight(Bold)
+        self.format_separator.setForeground(self.Gray)
+        # 圖片 ![format_string](format_link)
+        self.format_string.setForeground(self.Brown)
+        # 連結
+        self.format_link.setFontUnderline(True)
+        # 刪除線
+        self.format_strike_out.setFontStrikeOut(True)
+        # 行內程式
+        # self.format_inline_code
+
     def _setup_reg_exp(self):
         """ 設定正規表達式 """
         # 標頭
-        for i in self.header_size:
-            self.__dict__[f"pattern_H{i}"] = QRegExp(r"^" + "#"*i + r"\s")
-        # 粗體
-        self.pattern_bold1 = QRegExp(r"\*\*(\w+)\*\*")
-        self.pattern_bold2 = QRegExp(r"\_\_(\w+)\_\_")
-        # 斜體
-        self.pattern_italic1 = QRegExp(r"\*(\w+)\*")
-        self.pattern_italic2 = QRegExp(r"\_(\w+)\_")
-        # 上標/下標
-        self.pattern_subscript = QRegExp(r"\~(.+?)\~")
-        self.pattern_superscript = QRegExp(r"\^(.+?)\^")
+        self.pattern_header = QRegExp(r"^(#{1,6}\s)")
+        # 引用
+        self.pattern_quote = QRegExp(r"^>\s?.*")
+        # 列表
+        self.pattern_unordered = QRegExp(r"^[\s]*[-\*\+]\s") # 無序
+        self.pattern_ordered = QRegExp(r"^[\s]*\d+\.\s") # 有序
+        # 勾選清單
+        self.pattern_unfinished = QRegExp(r"^[\s]*[-*+]\s\[\s\]\s.*") # 未完成
+        self.pattern_finished = QRegExp(r"^[\s]*[-*+]\s\[[xX]\]\s.*") # 已完成
+        # 程式碼
+        self.pattern_code_block = QRegExp(r"^(\s*)```")
+        # 水平分隔線
+        self.pattern_separator = QRegExp(r"^([-*_]){3,}$")
+        # 圖片
+        self.pattern_image = QRegExp(r"!\[([^\]]*)\]\(([^)]+)\)")
         
+        # 粗體
+        self.pattern_bold1 = QRegExp(r"\*\*([^*]+)\*\*")
+        self.pattern_bold2 = QRegExp(r"\_\_([^_]+)\_\_")
+        # 斜體
+        self.pattern_italic1 = QRegExp(r"\*([^*]+)\*")
+        self.pattern_italic2 = QRegExp(r"\_([^_]+)\_")
+        # 上標/下標
+        self.pattern_subscript = QRegExp(r"~([^~]+)~")
+        self.pattern_superscript = QRegExp(r"\^([^^]+)\^")
+        # 刪除線
+        self.pattern_strike_out = QRegExp(r"~~([^~]+)~~")
+        # 螢光筆 (強調顯示)
+        self.pattern_highlight = QRegExp(r"==([^=]+)==")
+        # 行內程式
+        self.pattern_inline_code = QRegExp(r"`([^`]+)`")
+        # 超連結
+        self.pattern_link = QRegExp(r"\[([^\]]+)\]\(([^)]+)\)")
+
     def _setup_rules(self):
         """ 設定規則 """
-        self.rules.append((self.pattern_bold1, self.format_bold))
-        self.rules.append((self.pattern_bold2, self.format_bold))
-        self.rules.append((self.pattern_italic1, self.format_italic))
-        self.rules.append((self.pattern_italic2, self.format_italic))
-        self.rules.append((self.pattern_subscript, self.format_subscript))
-        self.rules.append((self.pattern_superscript, self.format_superscript))
-        # headers
-        for i in self.header_size:
-            self.header_rules.append((self.__dict__[f"pattern_H{i}"], self.__dict__[f"format_H{i}"]))
-
+        # 整行高亮規則
+        self.full_line_rules = [
+            (self.pattern_quote, self.format_quote),
+            (self.pattern_separator, self.format_separator),
+            (self.pattern_header, self.format_header)
+        ]
+        # 局部高亮規則
+        self.partial_rules = [
+            # 只對符號部分標色
+            (self.pattern_unfinished, {1: self.format_unfinished}),
+            (self.pattern_finished, {1: self.format_finished}),
+            (self.pattern_unordered, {1: self.format_unordered}),
+            (self.pattern_ordered, {1: self.format_ordered}),
+            # 圖片與連結: 拆分內容與網址
+            (self.pattern_image, {1: self.format_string, 2: self.format_link}),
+            (self.pattern_link, {1: self.format_header, 2: self.format_link}),
+        ]
+        # 內聯疊加規則
+        self.inline_rules = [
+            (self.pattern_inline_code, self.format_inline_code),
+            (self.pattern_highlight, self.format_highlight),
+            (self.pattern_bold1, self.format_bold),
+            (self.pattern_bold2, self.format_bold),
+            (self.pattern_italic1, self.format_italic),
+            (self.pattern_italic2, self.format_italic),
+            (self.pattern_strike_out, self.format_strike_out),
+            (self.pattern_subscript, self.format_subscript),
+            (self.pattern_superscript, self.format_superscript),
+        ]
+        
     def highlightBlock(self, text: str | None):
         """ 對每一行文字進行高亮處理 """
         if text is None: return
-        # 一般
-        for pattern, format in self.rules:
-            index = pattern.indexIn(text)
-            while index >= 0:
-                # 處理文字
-                length = pattern.matchedLength()
-                self.setFormat(index, length, format)
-                index = pattern.indexIn(text, index + length)
-        # Heading
-        for pattern, format in self.header_rules:
-            index = pattern.indexIn(text)
-            if index == -1: continue
-            self.setFormat(index, len(text)-index, format)
 
-# 預覽Markdown
-class MdPreviewer(Highlighter): # 📸🖼️
+class MdPreviewer(Highlighter): # 🖼️
     """ Previewer for Markdown """
     def __init__(self, parent_document: QTextDocument):
         self.format_headers: list[QTextCharFormat] = []
@@ -1589,3 +1656,5 @@ if __name__ == "__main__":
         window = MainWindow(file_to_open=file_to_open)
     window.show()
     sys.exit(app.exec_())
+
+# setting: color/color_theme/verify_password_first...
