@@ -506,11 +506,16 @@ class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): # pyright: ignore[repo
 class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     """ Base of all Highlighters """
     No_State = -1 # None
+    State_Single_Double = 1    # " "
+    State_Single_Single = 2    # ' '
+    State_Triple_Double = 3 # """ """
+    State_Triple_Single = 4 # ''' '''
     
     def __init__(self, parent_document: QTextDocument):
         super().__init__(parent_document)
         self.rules: list[tuple[QRegExp, QTextCharFormat]] = []
         # 初始化函數
+        self.load_colors()
         self._empty_QTextCharFormat()
         self._setup_formats()
         self._setup_reg_exp()
@@ -543,10 +548,6 @@ class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
 
 class PyHighlighter(Highlighter):
     """ Highlighter for Python """
-    State_Single_Double = 1    # " "
-    State_Single_Single = 2    # ' '
-    State_Triple_Double = 3 # """ """
-    State_Triple_Single = 4 # ''' '''
     
     def __init__(self, parent_document: QTextDocument):
         self.line: list[None|QRegExp]
