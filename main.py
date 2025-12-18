@@ -707,6 +707,8 @@ class MdHighlighter(Highlighter):
         self.format_italic = QTextCharFormat()
         self.format_subscript = QTextCharFormat()
         self.format_superscript = QTextCharFormat()
+        self.format_blue = QtextCharFormat()
+        
         self.format_bold.setFontWeight(QFont.Weight.Bold) # 粗體
         self.format_italic.setFontItalic(True)            # 斜體
         # 上下標
