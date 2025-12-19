@@ -42,7 +42,7 @@ def hash_password(password: str|bytes|bytearray) -> str:
     """ 將傳入的密碼雜湊 """
     password = _ensure_bytes(password)
     salt = os.urandom(_salt_size)
-    key = PBKDF2(password, salt, dkLen=_hash_len , count=_count, hmac_hash_module=SHA256)
+    key = PBKDF2(password, salt, dkLen=_hash_len , count=_count, hmac_hash_module=SHA256) # pyright: ignore[reportArgumentType]
     _try_clear(password)
     del password
     return f"pbkdf2_sha256${_count}${base64.b64encode(salt).decode()}${base64.b64encode(key).decode()}"
@@ -55,7 +55,7 @@ def verify_password(password: str|bytes|bytearray, stored: str) -> bool:
         iterations = int(iter_str)
         salt = base64.b64decode(salt_b64)
         key = base64.b64decode(key_b64)
-        new_key = PBKDF2(password, salt, dkLen=len(key), count=iterations, hmac_hash_module=SHA256)
+        new_key = PBKDF2(password, salt, dkLen=len(key), count=iterations, hmac_hash_module=SHA256) # pyright: ignore[reportArgumentType]
         _try_clear(password)
         del password
         return hmac.compare_digest(new_key, key)
@@ -67,7 +67,7 @@ class yoAES:
     def encrypt(plain_text: str, password: str|bytes|bytearray):
         password = _ensure_bytes(password)
         salt = get_random_bytes(_salt_size)
-        key = PBKDF2(password, salt, dkLen=_hash_len, count=_count)
+        key = PBKDF2(password, salt, dkLen=_hash_len, count=_count) # pyright: ignore[reportArgumentType]
         _try_clear(password)
         del password
         cipher = AES.new(key, AES.MODE_GCM)
@@ -79,7 +79,7 @@ class yoAES:
         password = _ensure_bytes(password)
         data = base64.b64decode(encrypted_text)
         salt, nonce, tag, cipher_text = data[:16], data[16:32], data[32:48], data[48:]
-        key = PBKDF2(password, salt, dkLen=32, count=_count)
+        key = PBKDF2(password, salt, dkLen=32, count=_count) # pyright: ignore[reportArgumentType]
         _try_clear(password)
         del password
         cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
