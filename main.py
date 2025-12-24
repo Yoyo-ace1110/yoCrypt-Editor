@@ -505,12 +505,6 @@ class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): # pyright: ignore[repo
 
 class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     """ Base of all Highlighters """
-    No_State = -1 # None
-    State_Single_Double = 1    # " "
-    State_Single_Single = 2    # ' '
-    State_Triple_Double = 3 # """ """
-    State_Triple_Single = 4 # ''' '''
-    
     def __init__(self, parent_document: QTextDocument):
         super().__init__(parent_document)
         self.rules: list[tuple[QRegExp, QTextCharFormat]] = []
@@ -548,6 +542,11 @@ class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
 
 class PyHighlighter(Highlighter):
     """ Highlighter for Python """
+    No_State = -1 # None
+    State_Single_Double = 1    # " "
+    State_Single_Single = 2    # ' '
+    State_Triple_Double = 3 # """ """
+    State_Triple_Single = 4 # ''' '''
     
     def __init__(self, parent_document: QTextDocument):
         self.line: list[None|QRegExp]
@@ -707,11 +706,16 @@ class PyHighlighter(Highlighter):
 
 class MdHighlighter(Highlighter):
     """ Highlighter for Markdown """
+    No_State = -1         # None
+    Code_Block_State = 1  # ```
+    Inline_Code_State = 2 # `...`
+    
     def __init__(self, parent_document: QTextDocument):
         self.full_line_rules: list[tuple[QRegExp, QTextCharFormat]]
         self.partial_rules: list[tuple[QRegExp, dict[int, QTextCharFormat]]]
         self.inline_rules: list[tuple[QRegExp, QTextCharFormat]]
         super().__init__(parent_document)
+        self.setCurrentBlockState(self.No_State)
 
     def _empty_QTextCharFormat(self):
         """ 空的樣式 """
@@ -757,7 +761,7 @@ class MdHighlighter(Highlighter):
         self.format_unfinished = QTextCharFormat(self.format_header)
         self.format_finished = QTextCharFormat(self.format_header)
         # 程式碼
-        # self.format_code_block
+        self.format_code_block.setBackground(self.Gray)
         # 水平分隔線 (灰色+粗體)
         self.format_separator.setFontWeight(Bold)
         self.format_separator.setForeground(self.Gray)
@@ -772,8 +776,9 @@ class MdHighlighter(Highlighter):
 
     def _setup_reg_exp(self):
         """ 設定正規表達式 """
+        self.pattern_escape = QRegExp(r"\\([\\`*_{}\[\]()#+-.!|])")
         # 標頭
-        self.pattern_header = QRegExp(r"^#{1,6}\s+.")
+        self.pattern_header = QRegExp(r"^(#{1,6}\s+.*)")
         # 引用
         self.pattern_quote = QRegExp(r"^>\s+.*")
         # 列表
@@ -812,11 +817,11 @@ class MdHighlighter(Highlighter):
         # 整行高亮規則
         self.full_line_rules = [
             (self.pattern_quote, self.format_quote),
-            (self.pattern_separator, self.format_separator),
-            (self.pattern_header, self.format_header)
+            (self.pattern_separator, self.format_separator)
         ]
         # 局部高亮規則
         self.partial_rules = [
+            (self.pattern_header, {1: self.format_header}), 
             # 只對符號部分標色
             (self.pattern_unfinished, {1: self.format_unfinished}),
             (self.pattern_finished, {1: self.format_finished}),
@@ -838,10 +843,36 @@ class MdHighlighter(Highlighter):
             (self.pattern_subscript, self.format_subscript),
             (self.pattern_superscript, self.format_superscript),
         ]
-        
+    
+    def is_escaped(self, index: int, text: str|None):
+        """ 判斷是否應該跳脫 """
+        if text is None: return False
+        # 計算跳脫數
+        count = 0
+        new_index = index-1
+        while new_index >= 0 and text[new_index] == "\\":
+            count += 1
+            new_index -= 1
+        # 判斷
+        return (count%2 == 1)
+    
+    # python main.py ./Test_higlighters/test.md
     def highlightBlock(self, text: str | None):
         """ 對每一行文字進行高亮處理 """
         if text is None: return
+        # 程式碼區塊
+        state = self.previousBlockState()
+        match_code = self.pattern_code_block.indexIn(text)
+        if match_code != -1:
+            # 偵測到Code_Block
+            new_state = self.Code_Block_State if (state == self.No_State) else self.No_State
+            self.setCurrentBlockState(new_state)
+            self.setFormat(0, len(text), self.format_code_block)
+            return
+        if state == self.Code_Block_State:
+            self.setCurrentBlockState(state)
+            self.setFormat(0, len(text), self.format_code_block)
+            return
         # Full Line Rules
         for pattern, _format in self.full_line_rules:
             index = pattern.indexIn(text)
@@ -853,28 +884,38 @@ class MdHighlighter(Highlighter):
         for pattern, group_dict in self.partial_rules:
             index = pattern.indexIn(text)
             while index >= 0:
-                for group_idx, fmt in group_dict.items():
+                # 跳脫
+                if self.is_escaped(index, text):
+                    index = pattern.indexIn(text, index+1)
+                    continue
+                # 正常處理
+                for group_idx, _format in group_dict.items():
                     start = pattern.pos(group_idx)
                     length = pattern.matchedLength()
-                    if start != -1 and length > 0: 
-                        self.setFormat(start, length, fmt)
+                    if start != -1 and length > 0: self.setFormat(start, length, _format)
                 index = pattern.indexIn(text, index + pattern.matchedLength())
         # Inline Rules
-        for pattern, fmt in self.inline_rules:
+        for pattern, _format in self.inline_rules:
             index = pattern.indexIn(text)
             while index >= 0:
+                # 跳脫
+                if self.is_escaped(index, text):
+                    index = pattern.indexIn(text, index+1)
+                    continue
+                # 正常處理
                 match_len = pattern.matchedLength()
                 if match_len > 0:
                     # 獲取該位置現有的格式 (例如已經由標題規則設定的藍色)
                     current_fmt = self.format(index)
                     # 建立新格式副本並合併 (Merge) 內聯樣式
                     new_fmt = QTextCharFormat(current_fmt)
-                    new_fmt.merge(fmt)
+                    new_fmt.merge(_format)
                     self.setFormat(index, match_len, new_fmt)
                 index = pattern.indexIn(text, index + match_len)        
 
 class MdPreviewer(Highlighter): # 🖼️
     """ Previewer for Markdown """
+    No_State = -1 # None
     def __init__(self, parent_document: QTextDocument):
         self.format_headers: list[QTextCharFormat] = []
         self.header_size = [1, 2, 3, 4, 5, 6]
