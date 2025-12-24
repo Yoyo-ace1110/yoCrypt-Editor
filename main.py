@@ -773,9 +773,9 @@ class MdHighlighter(Highlighter):
     def _setup_reg_exp(self):
         """ 設定正規表達式 """
         # 標頭
-        self.pattern_header = QRegExp(r"^(#{1,6}\s)")
+        self.pattern_header = QRegExp(r"^#{1,6}\s+.")
         # 引用
-        self.pattern_quote = QRegExp(r"^>\s?.*")
+        self.pattern_quote = QRegExp(r"^>\s+.*")
         # 列表
         self.pattern_unordered = QRegExp(r"^[\s]*[-\*\+]\s") # 無序
         self.pattern_ordered = QRegExp(r"^[\s]*\d+\.\s") # 有序
@@ -793,8 +793,8 @@ class MdHighlighter(Highlighter):
         self.pattern_bold1 = QRegExp(r"\*\*([^*]+)\*\*")
         self.pattern_bold2 = QRegExp(r"\_\_([^_]+)\_\_")
         # 斜體
-        self.pattern_italic1 = QRegExp(r"\*([^*]+)\*")
-        self.pattern_italic2 = QRegExp(r"\_([^_]+)\_")
+        self.pattern_italic1 = QRegExp(r"(^|[^*])\*([^*]+)\*([^*]|$)")
+        self.pattern_italic2 = QRegExp(r"(^|[^_])\_([^_]+)\_([^_]|$)")
         # 上標/下標
         self.pattern_subscript = QRegExp(r"~([^~]+)~")
         self.pattern_superscript = QRegExp(r"\^([^^]+)\^")
@@ -842,6 +842,36 @@ class MdHighlighter(Highlighter):
     def highlightBlock(self, text: str | None):
         """ 對每一行文字進行高亮處理 """
         if text is None: return
+        # Full Line Rules
+        for pattern, _format in self.full_line_rules:
+            index = pattern.indexIn(text)
+            # 不用處理
+            if index == -1: continue
+            # 上色
+            self.setFormat(0, len(text), _format)
+        # Partail Rules
+        for pattern, group_dict in self.partial_rules:
+            index = pattern.indexIn(text)
+            while index >= 0:
+                for group_idx, fmt in group_dict.items():
+                    start = pattern.pos(group_idx)
+                    length = pattern.matchedLength()
+                    if start != -1 and length > 0: 
+                        self.setFormat(start, length, fmt)
+                index = pattern.indexIn(text, index + pattern.matchedLength())
+        # Inline Rules
+        for pattern, fmt in self.inline_rules:
+            index = pattern.indexIn(text)
+            while index >= 0:
+                match_len = pattern.matchedLength()
+                if match_len > 0:
+                    # 獲取該位置現有的格式 (例如已經由標題規則設定的藍色)
+                    current_fmt = self.format(index)
+                    # 建立新格式副本並合併 (Merge) 內聯樣式
+                    new_fmt = QTextCharFormat(current_fmt)
+                    new_fmt.merge(fmt)
+                    self.setFormat(index, match_len, new_fmt)
+                index = pattern.indexIn(text, index + match_len)        
 
 class MdPreviewer(Highlighter): # 🖼️
     """ Previewer for Markdown """
@@ -1223,7 +1253,7 @@ class MainWindow(QMainWindow):
         # Python
         if extension in [".py", ".ipynb"]: self.highlighter = PyHighlighter(doc)
         # Markdown
-        # elif extension in [".md"]: self.highlighter = MdHighlighter(doc)
+        elif extension in [".md"]: self.highlighter = MdHighlighter(doc)
         # 以上皆非
         else: self.highlighter = None
 
