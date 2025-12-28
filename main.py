@@ -33,7 +33,7 @@ class PasswordPrompt(QDialog):
 
         self.label = QLabel("請輸入主密碼")
         self.input = QLineEdit()
-        self.input.setEchoMode(QLineEdit.Password)
+        self.input.setEchoMode(QLineEdit.EchoMode.Password)
         self.button = QPushButton("確定")
 
         layout.addWidget(self.label)
