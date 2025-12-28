@@ -1487,7 +1487,7 @@ class MainWindow(QMainWindow):
         dialog = QInputDialog(self)
         dialog.setWindowTitle("更改主密碼")
         dialog.setLabelText("請輸入舊密碼:")
-        dialog.setTextEchoMode(QLineEdit.Password)
+        dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
         if not dialog.exec_(): return # cancel
         
         old_password_str = dialog.textValue() # 暫存為 str
