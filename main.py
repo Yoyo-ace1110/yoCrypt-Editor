@@ -721,6 +721,7 @@ class MdHighlighter(Highlighter):
         """ 空的樣式 """
         self.format_bold = QTextCharFormat()
         self.format_italic = QTextCharFormat()
+        self.format_bold_italic = QTextCharFormat()
         self.format_superscript = QTextCharFormat()
         self.format_subscript = QTextCharFormat()
         self.format_highlight = QTextCharFormat()
@@ -742,6 +743,9 @@ class MdHighlighter(Highlighter):
         self.format_bold.setFontWeight(Bold)
         # 斜體
         self.format_italic.setFontItalic(True)
+        # 粗斜體
+        self.format_bold_italic.setFontWeight(Bold)
+        self.format_bold_italic.setFontItalic(True)
         # 上標
         self.format_superscript.setVerticalAlignment(SuperScript)
         # 下標
@@ -795,11 +799,14 @@ class MdHighlighter(Highlighter):
         self.pattern_image = QRegExp(r"!\[([^\]]*)\]\(([^)]+)\)")
         
         # 粗體
-        self.pattern_bold1 = QRegExp(r"\*\*([^*]+)\*\*")
-        self.pattern_bold2 = QRegExp(r"\_\_([^_]+)\_\_")
+        self.pattern_bold1 = QRegExp(r"(^|[^*])\*\*([^*]+)\*\*([^*]|$)")
+        self.pattern_bold2 = QRegExp(r"(^|[^_])\_\_([^_]+)\_\_([^_]|$)")
         # 斜體
         self.pattern_italic1 = QRegExp(r"(^|[^*])\*([^*]+)\*([^*]|$)")
         self.pattern_italic2 = QRegExp(r"(^|[^_])\_([^_]+)\_([^_]|$)")
+        # 粗斜體
+        self.pattern_bold_italic1 = QRegExp(r"\*\*\*([^*]+)\*\*\*")
+        self.pattern_bold_italic2 = QRegExp(r"\_\_\_([^_]+)\_\_\_")
         # 上標/下標
         self.pattern_subscript = QRegExp(r"~([^~]+)~")
         self.pattern_superscript = QRegExp(r"\^([^^]+)\^")
@@ -839,6 +846,8 @@ class MdHighlighter(Highlighter):
             (self.pattern_bold2, self.format_bold),
             (self.pattern_italic1, self.format_italic),
             (self.pattern_italic2, self.format_italic),
+            (self.pattern_bold_italic1, self.format_bold_italic),
+            (self.pattern_bold_italic2, self.format_bold_italic),
             (self.pattern_strike_out, self.format_strike_out),
             (self.pattern_subscript, self.format_subscript),
             (self.pattern_superscript, self.format_superscript),
@@ -1703,6 +1712,10 @@ class MainWindow(QMainWindow):
     def action_highlight_as_python(self):
         """ 當作python source file編輯 """
         self.highlighter = PyHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
+        
+    def action_highlight_as_markdown(self):
+        """ 當作python source file編輯 """
+        self.highlighter = MdHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
 
     def closeEvent(self, a0):
         """ 關閉時的動作 """
