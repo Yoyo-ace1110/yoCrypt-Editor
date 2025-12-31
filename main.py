@@ -1124,7 +1124,8 @@ class MainWindow(QMainWindow):
         
         auto_highlight_action = QAction("Auto Highlight", self)                # 自動判斷檔案類型並高亮
         disable_highlight_action = QAction("Disable Highlight", self)          # 不要高亮
-        highlight_as_python_action = QAction("Highlight as Python Code", self) # 視為python高亮
+        highlight_as_python_action = QAction("Highlight as Python", self)      # 視為python高亮
+        highlight_as_markdown_action = QAction("Highlight as Markdown", self)  # 視為Markdown高亮
 
         # 連接事件
         change_password_action.triggered.connect(self.change_master_password)
@@ -1154,6 +1155,7 @@ class MainWindow(QMainWindow):
         auto_highlight_action.triggered.connect(self.action_auto_highlight)
         disable_highlight_action.triggered.connect(self.action_disable_highlight)
         highlight_as_python_action.triggered.connect(self.action_highlight_as_python)
+        highlight_as_markdown_action.triggered.connect(self.action_highlight_as_markdown)
 
         # 快捷鍵
         new_action.setShortcut("Ctrl+T")
@@ -1192,6 +1194,7 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(auto_highlight_action)
         edit_menu.addAction(disable_highlight_action)
         edit_menu.addAction(highlight_as_python_action)
+        edit_menu.addAction(highlight_as_markdown_action)
 
         view_menu.addAction(zoom_in_action)
         view_menu.addAction(zoom_out_action)
