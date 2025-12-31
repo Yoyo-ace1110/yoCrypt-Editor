@@ -499,7 +499,7 @@ class ReplaceBar(FR_Bar):
         super().init_replace_bar()
         self.main_layout.addStretch(1)
 
-# 高亮器
+# 高亮器 python main.py ./Test_higlighters/test.md
 class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): # pyright: ignore[reportGeneralTypeIssues]
     pass
 
