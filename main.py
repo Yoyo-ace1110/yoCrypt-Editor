@@ -3,8 +3,10 @@ from enum import Enum
 from abc import abstractmethod, ABCMeta
 from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PyQt5.QtCore import QTimer, Qt, QRegExp
-from PyQt5.QtGui import QTextCursor, QTextDocument, QSyntaxHighlighter, QKeyEvent
-from PyQt5.QtGui import QTextCharFormat, QColor, QFont
+from PyQt5.QtGui import (
+    QTextCursor, QTextDocument, QSyntaxHighlighter, QKeyEvent, 
+    QTextCharFormat, QColor, QFont, QInputMethodEvent, QKeySequence, 
+)
 from yotools200.yoCrypt import yoCrypt_init, hash_password, verify_password, yoAES
 from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32, "utf-8")
@@ -1001,22 +1003,50 @@ class MdPreviewer(Highlighter): # 🖼️
 # Use this instead of QPlainTextEdit
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent: QWidget|None = None):
+        """ 初始化CodeEditor """
         super().__init__(parent=parent)
         self.tab: str
         self.set_tab()
+        self._is_completing: bool = False
+        self.brackets = {
+            "(": ")", 
+            "[": "]", 
+            "{": "}"
+        }
     
-    def set_tab(self, replace: str = "  "):
+    def set_tab(self, replace: str = "  ") -> None:
+        """ 設定輸入tab時插入的字元 """
         self.tab = replace
 
-    def keyPressEvent(self, e: QKeyEvent|None):
-        if e.key() == Qt.Key.Key_Tab: # pyright: ignore[reportOptionalMemberAccess]
+    def keyPressEvent(self, e: QKeyEvent|None) -> None:
+        """ 特殊按鍵 """
+        if e is None: return
+        if e.key() == Qt.Key.Key_Tab:
+            # 處理tab
             self.insertPlainText(self.tab)
         else: super().keyPressEvent(e)
+    
+    def inputMethodEvent(self, a0: QInputMethodEvent | None) -> None:
+        """ 一般輸入 """
+        if a0 is None: return
+        commit_text = a0.commitString()
+
+        if commit_text in self.brackets:
+            # 原本的輸入動作
+            super().inputMethodEvent(a0)
+            # 補全
+            self.insertPlainText(self.brackets[commit_text])
+            # 退一格
+            cursor = self.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, 1)
+            self.setTextCursor(cursor)
+        else: super().inputMethodEvent(a0)
 
 # 主視窗
 class MainWindow(QMainWindow):
     """ Main window of this application """
     def __init__(self, file_to_open: str|None = None):
+        """ 初始化mainwindow """
         super().__init__()
         # 建立視窗
         self.setWindowTitle("yoCrypt Editor")
@@ -1063,6 +1093,7 @@ class MainWindow(QMainWindow):
 
         self.tabs.currentChanged.connect(self._handle_tab_change)   # 切換分頁事件
         self.tabs.tabCloseRequested.connect(self._handle_tab_close) # 關閉分頁事件
+        self.tabs.setMovable(True)                                  # 可以拖曳
         
         # 尋找/取代 layout
         self.FR_dock = QDockWidget("尋找/取代", self)  # 浮動視窗
@@ -1203,6 +1234,10 @@ class MainWindow(QMainWindow):
         view_menu.addAction(set_theme_dark_action)
         view_menu.addAction(set_theme_light_action)
         view_menu.addAction(set_theme_origin_action)
+        
+        # 特殊快捷鍵
+        self.next_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
+        self.next_tab_shortcut.activated.connect(self.switch_next_tab)
 
     @property
     def tab(self) -> Tab:
@@ -1719,6 +1754,15 @@ class MainWindow(QMainWindow):
     def action_highlight_as_markdown(self):
         """ 當作python source file編輯 """
         self.highlighter = MdHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
+
+    def switch_next_tab(self):
+        """ 切換至下一個分頁 """
+        current_index = self.tabs.currentIndex()
+        total_tabs = self.tabs.count()
+        # 切換(環繞)
+        next_index = (current_index + 1) % total_tabs
+        self.tabs.setCurrentIndex(next_index)
+        self._handle_tab_change(next_index)
 
     def closeEvent(self, a0):
         """ 關閉時的動作 """

@@ -2,21 +2,16 @@
 # h1
 ######h6
 ####### h7
-N~down~
-
-N^up^
+~down~
+^up^
 __bold1__
 _italic1_
 **bold2**
 *italic2*
 
-*hi* **hi** ***hi***
-
 $$\text{`^#\s.*`}$$
 
 ### 結構細節解析
-
-> ## hi
 
 | 符號 | 描述 | 目的 |
 | :--- | :--- | :--- |
@@ -34,3 +29,4 @@ $$\text{`^#\s.*`}$$
 # 僅匹配 H1 標題
 self.pattern_header_h1 = QRegExp(r"^#\s.*") 
 ```
+
