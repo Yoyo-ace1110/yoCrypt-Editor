@@ -1021,9 +1021,29 @@ class CodeEditor(QPlainTextEdit):
     def keyPressEvent(self, e: QKeyEvent|None) -> None:
         """ 特殊按鍵 """
         if e is None: return
+        cursor = self.textCursor()
+        # 處理tab
         if e.key() == Qt.Key.Key_Tab:
-            # 處理tab
             self.insertPlainText(self.tab)
+        # 處理backspace
+        elif e.key() == Qt.Key.Key_Backspace:
+            # 避免游標在最前面
+            if cursor.position() == 0:
+                return super().keyPressEvent(e)
+            # 檢查前一個
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor, 1)
+            left_char = cursor.selectedText()
+            # 不是括號
+            if not (left_char in self.brackets):
+                return super().keyPressEvent(e)
+            # 是括號
+            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.MoveAnchor, 1)
+            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1)
+            right_char = cursor.selectedText()
+            # 去除右括號
+            if (self.brackets[left_char] == right_char):
+                cursor.removeSelectedText()
+            super().keyPressEvent(e)
         else: super().keyPressEvent(e)
     
     def inputMethodEvent(self, a0: QInputMethodEvent | None) -> None:
