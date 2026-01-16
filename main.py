@@ -943,28 +943,9 @@ class MdPreviewer(Highlighter): # 🖼️
         # 上下標
         self.format_subscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSubScript)
         self.format_superscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSuperScript)
-        
-        """ 標頭
-        本來的程式:
-            self.format_H2 = QTextCharFormat()
-            self.format_H2.setForeground(self.Dark_Blue)
-            self.format_H2.setFontWeight(QFont.Bold)
-            self.format_H2.setFontPointSize(16)
-        """
-        for i in self.header_size:
-            self.__dict__[f"format_H{i}"] = QTextCharFormat()
-            # 簡化表達
-            format_Hi: QTextCharFormat = self.__dict__[f"format_H{i}"]
-            format_Hi.setForeground(self.Dark_Blue)
-            format_Hi.setFontWeight(QFont.Weight.Bold)
-            format_Hi.setFontPointSize(40 - i*4)
-            self.format_headers.append(format_Hi)
     
     def _setup_reg_exp(self):
         """ 設定正規表達式 """
-        # 標頭
-        for i in self.header_size:
-            self.__dict__[f"pattern_H{i}"] = QRegExp(r"^" + "#"*i + r"\s")
         # 粗體
         self.pattern_bold1 = QRegExp(r"\*\*(\w+)\*\*")
         self.pattern_bold2 = QRegExp(r"\_\_(\w+)\_\_")
@@ -1007,11 +988,15 @@ class CodeEditor(QPlainTextEdit):
         super().__init__(parent=parent)
         self.tab: str
         self.set_tab()
-        self._is_completing: bool = False
         self.brackets = {
-            "(": ")", 
-            "[": "]", 
-            "{": "}"
+            # 半形
+            "(": ")", "[": "]", "{": "}", 
+            "⟨": "⟩", "⟪": "⟫", 
+            # 全形
+            "（": "）", "［": "］", "｛": "｝", 
+            "〈": "〉", "《": "》", "〔": "〕", 
+            "【": "】", "〖": "〗", 
+            "「": "」", "『": "』", 
         }
     
     def set_tab(self, replace: str = "  ") -> None:
@@ -1045,7 +1030,7 @@ class CodeEditor(QPlainTextEdit):
                 cursor.removeSelectedText()
             super().keyPressEvent(e)
         else: super().keyPressEvent(e)
-    
+
     def inputMethodEvent(self, a0: QInputMethodEvent | None) -> None:
         """ 一般輸入 """
         if a0 is None: return
@@ -1369,7 +1354,7 @@ class MainWindow(QMainWindow):
         """ 讀取指定位置的檔案 回傳是否成功 """
         file_name = os.path.basename(file_path)
         # 內部函數
-        def msg(): self.statusBar().showMessage(f"已{hint}: {file_name}", 4000) # pyright: ignore[reportOptionalMemberAccess]
+        def msg(): self.statusBar().showMessage(f"已{hint}: {file_name}", 5000) # pyright: ignore[reportOptionalMemberAccess]
         # 嘗試多種編碼讀取
         encrypted_data = None
         encodings_to_try = ["utf-8", "gbk", "cp950", "latin-1"]
@@ -1382,7 +1367,7 @@ class MainWindow(QMainWindow):
             except UnicodeDecodeError: continue
             except Exception as e:
                 QMessageBox.critical(self, "錯誤", f"讀取檔案 {file_name} 失敗: {e}")
-                return False # 讀取失敗，直接返回
+                return False # 讀取失敗
         if encrypted_data is None:
             QMessageBox.critical(self, "編碼錯誤", f"無法識別檔案 {file_name} 的編碼格式，開啟失敗。")
             return False
