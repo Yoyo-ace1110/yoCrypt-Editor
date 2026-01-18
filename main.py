@@ -1,3 +1,4 @@
+# Copyright (C) 2026 Yoyo-ace1110
 import sys, os, qdarktheme 
 from enum import Enum
 from abc import abstractmethod, ABCMeta

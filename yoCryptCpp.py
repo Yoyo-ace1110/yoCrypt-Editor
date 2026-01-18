@@ -1,3 +1,4 @@
+# Copyright (C) 2026 Yoyo-ace1110
 import base64, os
 openssl_bin = r"C:\Program Files\OpenSSL-Win64\bin"
 mingw_bin = r"C:\MinGW\winlibs-x86_64-posix-seh-gcc-15.1.0-mingw-w64ucrt-12.0.0-r1\mingw64\bin"
