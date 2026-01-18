@@ -6,6 +6,4 @@
 
 This document and all its contents are the exclusive property of [Yoyo-ace1110] and protected by international copyright laws.
 
-**Unauthorized use, reproduction, or distribution is strictly prohibited.**
-
-For licensing or permissions, please contact: [liaojiayouy@gmail.com]
+For licensing or permissions, please refer to [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt) or contact: [liaojiayouy@gmail.com](mailto:liaojiayouy@gmail.com)
