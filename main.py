@@ -1,12 +1,9 @@
 import sys, os, qdarktheme 
 from enum import Enum
 from abc import abstractmethod, ABCMeta
-from PyQt5.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
-from PyQt5.QtCore import QTimer, Qt, QRegExp
-from PyQt5.QtGui import (
-    QTextCursor, QTextDocument, QSyntaxHighlighter, QKeyEvent, 
-    QTextCharFormat, QColor, QFont, QInputMethodEvent, QKeySequence, 
-)
+from PySide6.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
+from PySide6.QtCore import QTimer, Qt, QRegularExpression
+from PySide6.QtGui import * # pyright: ignore[reportWildcardImportFromLibrary]
 from yoCryptCpp import * # pyright: ignore[reportWildcardImportFromLibrary]
 from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32)
@@ -282,7 +279,7 @@ class FR_Bar(QWidget):
 
     def _find_current_index(self, text):
         """ 計算當前被選取匹配項是總數中的第幾個 """
-        flags = QTextDocument.FindFlag()
+        flags = QTextDocument.FindFlag(0)
         if self.case_sensitive: flags |= QTextDocument.FindFlag.FindCaseSensitively # 區分大小寫
         current_selection_start = self.main_window.text_edit.textCursor().selectionStart()
         original_cursor = self.main_window.text_edit.textCursor() 
@@ -379,7 +376,7 @@ class FR_Bar(QWidget):
             self._disable_buttons(True)
             return
         # 計算總數
-        flags = QTextDocument.FindFlags() 
+        flags = QTextDocument.FindFlag(0) 
         if self.case_sensitive: flags |= QTextDocument.FindFlag.FindCaseSensitively
         self._calculate_match_count(search_text, flags)
         if self.match_count == 0:
@@ -412,7 +409,7 @@ class FR_Bar(QWidget):
 
     def action_find_next(self):
         """ 找下一個 """
-        flags = QTextDocument.FindFlag() # 預設為向前尋找 (FindBackward=False)
+        flags = QTextDocument.FindFlag(0) # 預設為向前尋找 (FindBackward=False)
         self._action_find_base(flags, QTextCursor.MoveOperation.Start)
 
     def action_find_prev(self):
@@ -444,7 +441,7 @@ class FR_Bar(QWidget):
         search_text = self.find_input.text()
         replace_text = self.replace_input.text()
         if not search_text: return
-        flags = QTextDocument.FindFlags()
+        flags = QTextDocument.FindFlag(0)
         if self.case_sensitive: flags |= QTextDocument.FindFlag.FindCaseSensitively
         original_cursor = self.main_window.text_edit.textCursor()
         temp_cursor = QTextCursor(self.main_window.text_edit.document())
@@ -513,7 +510,7 @@ class Highlighter(QSyntaxHighlighter, metaclass=HighlighterMeta):
     """ Base of all Highlighters """
     def __init__(self, parent_document: QTextDocument):
         super().__init__(parent_document)
-        self.rules: list[tuple[QRegExp, QTextCharFormat]] = []
+        self.rules: list[tuple[QRegularExpression, QTextCharFormat]] = []
         # 初始化函數
         self.load_colors()
         self._empty_QTextCharFormat()
@@ -555,7 +552,7 @@ class PyHighlighter(Highlighter):
     State_Triple_Single = 4 # ''' '''
     
     def __init__(self, parent_document: QTextDocument):
-        self.line: list[None|QRegExp]
+        self.line: list[None|QTextCharFormat]
         super().__init__(parent_document)
         self.setCurrentBlockState(self.No_State)
 
@@ -582,26 +579,35 @@ class PyHighlighter(Highlighter):
             pattern = self.pattern_single_single
         # 處理pattern
         if pattern is None: raise
-        new_index = pattern.indexIn(text, index)
+        
+        match = pattern.match(text, index)
+        new_index = match.capturedStart() if match.hasMatch() else -1
+        
         # 這行也沒結束引號
         if new_index == -1:
             self._format_line(index, len(text)-index, self.format_string)
         # 把引號之前註解掉
         else: 
             state = self.No_State
-            length = new_index + pattern.matchedLength() - index
+            length = new_index + match.capturedLength() - index
             self._format_line(index, length, self.format_string)
-            new_index += pattern.matchedLength()
+            new_index += match.capturedLength()
         return (new_index, state)
 
     def _find_next_quote(self, index: int, text: str) -> tuple[int, int]: 
         """ 找到最近的引號以及其索引值 """
         exist = []
         # 計算索引
-        i11 = self.pattern_single_single.indexIn(text, index)
-        i12 = self.pattern_single_double.indexIn(text, index)
-        i31 = self.pattern_triple_single.indexIn(text, index)
-        i32 = self.pattern_triple_double.indexIn(text, index)
+        m11 = self.pattern_single_single.match(text, index)
+        m12 = self.pattern_single_double.match(text, index)
+        m31 = self.pattern_triple_single.match(text, index)
+        m32 = self.pattern_triple_double.match(text, index)
+        
+        i11 = m11.capturedStart() if m11.hasMatch() else -1
+        i12 = m12.capturedStart() if m12.hasMatch() else -1
+        i31 = m31.capturedStart() if m31.hasMatch() else -1
+        i32 = m32.capturedStart() if m32.hasMatch() else -1
+        
         # 加入非-1的
         for i in [i11, i12, i31, i32]:
             if i != -1:
@@ -648,15 +654,15 @@ class PyHighlighter(Highlighter):
                     "global", "yield", "del", "assert", "nonlocal"]
         # import keywords | keyword.kwlist
         keywords_str = r'\b(' + '|'.join(keywords) + r')\b'
-        self.pattern_keywords = QRegExp(keywords_str)
-        self.pattern_comment = QRegExp(r"#[^\n]*")
-        self.pattern_number = QRegExp(r"\b[0-9]+\b")
+        self.pattern_keywords = QRegularExpression(keywords_str)
+        self.pattern_comment = QRegularExpression(r"#[^\n]*")
+        self.pattern_number = QRegularExpression(r"\b[0-9]+\b")
         # 單個引號
-        self.pattern_single_double = QRegExp(r"'")
-        self.pattern_single_single = QRegExp(r'"')
+        self.pattern_single_double = QRegularExpression(r"'")
+        self.pattern_single_single = QRegularExpression(r'"')
         # 三重引號
-        self.pattern_triple_double = QRegExp(r'"""')
-        self.pattern_triple_single = QRegExp(r"'''")
+        self.pattern_triple_double = QRegularExpression(r'"""')
+        self.pattern_triple_single = QRegularExpression(r"'''")
 
     def _setup_rules(self):
         """ 設定規則 """
@@ -679,7 +685,10 @@ class PyHighlighter(Highlighter):
                 continue
             # 引號有關閉找下一個
             quote_index, new_state = self._find_next_quote(index, text)
-            comment_index = self.pattern_comment.indexIn(text, index)
+            
+            m_comment = self.pattern_comment.match(text, index)
+            comment_index = m_comment.capturedStart() if m_comment.hasMatch() else -1
+            
             # 兩者皆無
             if quote_index == -1 and comment_index == -1:
                 state = self.No_State
@@ -697,19 +706,21 @@ class PyHighlighter(Highlighter):
         # 上色一般項目
         for pattern, format in self.rules:
             # 初始化index
-            index = pattern.indexIn(text)
+            match = pattern.match(text)
+            index = match.capturedStart() if match.hasMatch() else -1
             while index >= 0:
                 # 上色並往下找
-                length = pattern.matchedLength()
+                length = match.capturedLength()
                 self._format_line(index, length, format, False)
-                index = pattern.indexIn(text, index + length)
+                match = pattern.match(text, index + length)
+                index = match.capturedStart() if match.hasMatch() else -1
         # 再度設定BlockState
         self.setCurrentBlockState(state)
         # 遍歷 self.line 緩衝區
         for i, f in enumerate(self.line):
             if f is None: continue
             self.setFormat(i, 1, f)
-
+            
 class MdHighlighter(Highlighter):
     """ Highlighter for Markdown """
     No_State = -1         # None
@@ -717,9 +728,9 @@ class MdHighlighter(Highlighter):
     Inline_Code_State = 2 # `...`
     
     def __init__(self, parent_document: QTextDocument):
-        self.full_line_rules: list[tuple[QRegExp, QTextCharFormat]]
-        self.partial_rules: list[tuple[QRegExp, dict[int, QTextCharFormat]]]
-        self.inline_rules: list[tuple[QRegExp, QTextCharFormat]]
+        self.full_line_rules: list[tuple[QRegularExpression, QTextCharFormat]]
+        self.partial_rules: list[tuple[QRegularExpression, dict[int, QTextCharFormat]]]
+        self.inline_rules: list[tuple[QRegularExpression, QTextCharFormat]]
         super().__init__(parent_document)
         self.setCurrentBlockState(self.No_State)
 
@@ -786,44 +797,44 @@ class MdHighlighter(Highlighter):
 
     def _setup_reg_exp(self):
         """ 設定正規表達式 """
-        self.pattern_escape = QRegExp(r"\\([\\`*_{}\[\]()#+-.!|])")
+        self.pattern_escape = QRegularExpression(r"\\([\\`*_{}\[\]()#+-.!|])")
         # 標頭
-        self.pattern_header = QRegExp(r"^(#{1,6}\s+.*)")
+        self.pattern_header = QRegularExpression(r"^(#{1,6}\s+.*)")
         # 引用
-        self.pattern_quote = QRegExp(r"^>\s+.*")
+        self.pattern_quote = QRegularExpression(r"^>\s+.*")
         # 列表
-        self.pattern_unordered = QRegExp(r"^[\s]*[-\*\+]\s") # 無序
-        self.pattern_ordered = QRegExp(r"^[\s]*\d+\.\s") # 有序
+        self.pattern_unordered = QRegularExpression(r"^[\s]*[-\*\+]\s") # 無序
+        self.pattern_ordered = QRegularExpression(r"^[\s]*\d+\.\s") # 有序
         # 勾選清單
-        self.pattern_unfinished = QRegExp(r"^[\s]*[-*+]\s\[\s\]\s.*") # 未完成
-        self.pattern_finished = QRegExp(r"^[\s]*[-*+]\s\[[xX]\]\s.*") # 已完成
+        self.pattern_unfinished = QRegularExpression(r"^[\s]*[-*+]\s\[\s\]\s.*") # 未完成
+        self.pattern_finished = QRegularExpression(r"^[\s]*[-*+]\s\[[xX]\]\s.*") # 已完成
         # 程式碼
-        self.pattern_code_block = QRegExp(r"^(\s*)```")
+        self.pattern_code_block = QRegularExpression(r"^(\s*)```")
         # 水平分隔線
-        self.pattern_separator = QRegExp(r"^([-*_]){3,}$")
+        self.pattern_separator = QRegularExpression(r"^([-*_]){3,}$")
         # 圖片
-        self.pattern_image = QRegExp(r"!\[([^\]]*)\]\(([^)]+)\)")
+        self.pattern_image = QRegularExpression(r"!\[([^\]]*)\]\(([^)]+)\)")
         
         # 粗體
-        self.pattern_bold1 = QRegExp(r"(^|[^*])\*\*([^*]+)\*\*([^*]|$)")
-        self.pattern_bold2 = QRegExp(r"(^|[^_])\_\_([^_]+)\_\_([^_]|$)")
+        self.pattern_bold1 = QRegularExpression(r"(^|[^*])\*\*([^*]+)\*\*([^*]|$)")
+        self.pattern_bold2 = QRegularExpression(r"(^|[^_])\_\_([^_]+)\_\_([^_]|$)")
         # 斜體
-        self.pattern_italic1 = QRegExp(r"(^|[^*])\*([^*]+)\*([^*]|$)")
-        self.pattern_italic2 = QRegExp(r"(^|[^_])\_([^_]+)\_([^_]|$)")
+        self.pattern_italic1 = QRegularExpression(r"(^|[^*])\*([^*]+)\*([^*]|$)")
+        self.pattern_italic2 = QRegularExpression(r"(^|[^_])\_([^_]+)\_([^_]|$)")
         # 粗斜體
-        self.pattern_bold_italic1 = QRegExp(r"\*\*\*([^*]+)\*\*\*")
-        self.pattern_bold_italic2 = QRegExp(r"\_\_\_([^_]+)\_\_\_")
+        self.pattern_bold_italic1 = QRegularExpression(r"\*\*\*([^*]+)\*\*\*")
+        self.pattern_bold_italic2 = QRegularExpression(r"\_\_\_([^_]+)\_\_\_")
         # 上標/下標
-        self.pattern_subscript = QRegExp(r"~([^~]+)~")
-        self.pattern_superscript = QRegExp(r"\^([^^]+)\^")
+        self.pattern_subscript = QRegularExpression(r"~([^~]+)~")
+        self.pattern_superscript = QRegularExpression(r"\^([^^]+)\^")
         # 刪除線
-        self.pattern_strike_out = QRegExp(r"~~([^~]+)~~")
+        self.pattern_strike_out = QRegularExpression(r"~~([^~]+)~~")
         # 螢光筆 (強調顯示)
-        self.pattern_highlight = QRegExp(r"==([^=]+)==")
+        self.pattern_highlight = QRegularExpression(r"==([^=]+)==")
         # 行內程式
-        self.pattern_inline_code = QRegExp(r"`([^`]+)`")
+        self.pattern_inline_code = QRegularExpression(r"`([^`]+)`")
         # 超連結
-        self.pattern_link = QRegExp(r"\[([^\]]+)\]\(([^)]+)\)")
+        self.pattern_link = QRegularExpression(r"\[([^\]]+)\]\(([^)]+)\)")
 
     def _setup_rules(self):
         """ 設定規則 """
@@ -871,14 +882,14 @@ class MdHighlighter(Highlighter):
         # 判斷
         return (count%2 == 1)
     
-    # python main.py ./Test_higlighters/test.md
     def highlightBlock(self, text: str | None):
         """ 對每一行文字進行高亮處理 """
         if text is None: return
         # 程式碼區塊
         state = self.previousBlockState()
-        match_code = self.pattern_code_block.indexIn(text)
-        if match_code != -1:
+        # 使用 match() 檢查 Code_Block
+        match_code = self.pattern_code_block.match(text)
+        if match_code.hasMatch():
             # 偵測到Code_Block
             new_state = self.Code_Block_State if (state == self.No_State) else self.No_State
             self.setCurrentBlockState(new_state)
@@ -890,35 +901,44 @@ class MdHighlighter(Highlighter):
             return
         # Full Line Rules
         for pattern, _format in self.full_line_rules:
-            index = pattern.indexIn(text)
+            match = pattern.match(text)
             # 不用處理
-            if index == -1: continue
+            if not match.hasMatch(): continue
             # 上色
-            self.setFormat(0, len(text), _format)
+            self.setFormat(0, len(text), _format) 
         # Partail Rules
         for pattern, group_dict in self.partial_rules:
-            index = pattern.indexIn(text)
+            match = pattern.match(text)
+            index = match.capturedStart() if match.hasMatch() else -1
             while index >= 0:
                 # 跳脫
                 if self.is_escaped(index, text):
-                    index = pattern.indexIn(text, index+1)
+                    match = pattern.match(text, index+1)
+                    index = match.capturedStart() if match.hasMatch() else -1
                     continue
                 # 正常處理
                 for group_idx, _format in group_dict.items():
-                    start = pattern.pos(group_idx)
-                    length = pattern.matchedLength()
+                    start = match.capturedStart(group_idx)
+                    length = match.capturedLength(group_idx)
                     if start != -1 and length > 0: self.setFormat(start, length, _format)
-                index = pattern.indexIn(text, index + pattern.matchedLength())
+                
+                # 往下找下一個匹配
+                next_pos = index + match.capturedLength()
+                match = pattern.match(text, next_pos)
+                index = match.capturedStart() if match.hasMatch() else -1
+                
         # Inline Rules
         for pattern, _format in self.inline_rules:
-            index = pattern.indexIn(text)
+            match = pattern.match(text)
+            index = match.capturedStart() if match.hasMatch() else -1
             while index >= 0:
                 # 跳脫
                 if self.is_escaped(index, text):
-                    index = pattern.indexIn(text, index+1)
+                    match = pattern.match(text, index+1)
+                    index = match.capturedStart() if match.hasMatch() else -1
                     continue
                 # 正常處理
-                match_len = pattern.matchedLength()
+                match_len = match.capturedLength()
                 if match_len > 0:
                     # 獲取該位置現有的格式 (例如已經由標題規則設定的藍色)
                     current_fmt = self.format(index)
@@ -926,66 +946,12 @@ class MdHighlighter(Highlighter):
                     new_fmt = QTextCharFormat(current_fmt)
                     new_fmt.merge(_format)
                     self.setFormat(index, match_len, new_fmt)
-                index = pattern.indexIn(text, index + match_len)        
-
-class MdPreviewer(Highlighter): # 🖼️
-    """ Previewer for Markdown """
-    No_State = -1 # None
-    def __init__(self, parent_document: QTextDocument):
-        self.format_headers: list[QTextCharFormat] = []
-        self.header_size = [1, 2, 3, 4, 5, 6]
-        super().__init__(parent_document)
-
-    def _setup_formats(self):
-        """ 設定樣式 """
-        self.format_bold = QTextCharFormat()
-        self.format_italic = QTextCharFormat()
-        self.format_subscript = QTextCharFormat()
-        self.format_superscript = QTextCharFormat()
-        self.format_bold.setFontWeight(QFont.Weight.Bold) # 粗體
-        self.format_italic.setFontItalic(True)            # 斜體
-        # 上下標
-        self.format_subscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSubScript)
-        self.format_superscript.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSuperScript)
-    
-    def _setup_reg_exp(self):
-        """ 設定正規表達式 """
-        # 粗體
-        self.pattern_bold1 = QRegExp(r"\*\*(\w+)\*\*")
-        self.pattern_bold2 = QRegExp(r"\_\_(\w+)\_\_")
-        # 斜體
-        self.pattern_italic1 = QRegExp(r"\*(\w+)\*")
-        self.pattern_italic2 = QRegExp(r"\_(\w+)\_")
-        # 上標/下標
-        self.pattern_subscript = QRegExp(r"\~(.+?)\~")
-        self.pattern_superscript = QRegExp(r"\^(.+?)\^")
-        
-    def _setup_rules(self):
-        """ 設定規則 """
-        self.rules.append((self.pattern_bold1, self.format_bold))
-        self.rules.append((self.pattern_bold2, self.format_bold))
-        self.rules.append((self.pattern_italic1, self.format_italic))
-        self.rules.append((self.pattern_italic2, self.format_italic))
-        self.rules.append((self.pattern_subscript, self.format_subscript))
-        self.rules.append((self.pattern_superscript, self.format_superscript))
-        # headers
-        for i in self.header_size:
-            self.rules.append((self.__dict__[f"pattern_H{i}"], self.__dict__[f"format_H{i}"]))
-
-    def highlightBlock(self, text: str | None):
-        """ 對每一行文字進行高亮處理 """
-        self.setCurrentBlockState(self.No_State)
-        # 找匹配項目
-        for pattern, format in self.rules:
-            index = pattern.indexIn(text)
-            while index >= 0:
-                # 處理文字
-                length = pattern.matchedLength()
-                self.setFormat(index, length, format)
-                # 下一個
-                index = pattern.indexIn(text, index + length)
-
-# Use this instead of QPlainTextEdit
+                
+                # 往下找下一個匹配
+                next_pos = index + match_len
+                match = pattern.match(text, next_pos)
+                index = match.capturedStart() if match.hasMatch() else -1
+                
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent: QWidget|None = None):
         """ 初始化CodeEditor """
@@ -1203,7 +1169,11 @@ class MainWindow(QMainWindow):
         open_crypted_action.setShortcut("Ctrl+O")
         auto_save_action.setShortcut("Ctrl+S")
 
-        zoom_in_action.setShortcuts(["Ctrl+=", "Ctrl+Plus", "Ctrl+KeypadPlus"])
+        zoom_in_action.setShortcuts([
+            QKeySequence("Ctrl+="), 
+            QKeySequence("Ctrl+Plus"), 
+            QKeySequence("Ctrl+KeypadPlus")
+        ])
         zoom_in_action.setShortcut("Ctrl++")
         zoom_out_action.setShortcut("Ctrl+-")
         reset_zoom_action.setShortcut("Ctrl+0")
@@ -1327,12 +1297,12 @@ class MainWindow(QMainWindow):
         reply = QMessageBox.question(self, "儲存變更",
             "檔案 ["+file_path+"] 尚未儲存，是否要儲存變更？",
             # 提供 Yes, No, Cancel 三個選項
-            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-            QMessageBox.Cancel # 預設選中 Cancel 避免誤觸
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel # 預設選中 Cancel 避免誤觸
         )
-        if reply == QMessageBox.No: return True
-        elif reply == QMessageBox.Yes: return self._auto_save()
-        elif reply == QMessageBox.Cancel: return False
+        if reply == QMessageBox.StandardButton.No: return True
+        elif reply == QMessageBox.StandardButton.Yes: return self._auto_save()
+        elif reply == QMessageBox.StandardButton.Cancel: return False
         else: raise ValueError(f"unexpected QMessageBox reply: {reply}")
 
     def _clear_master_password(self):
@@ -1420,7 +1390,7 @@ class MainWindow(QMainWindow):
 
     def _open_file(self, hint: str, decrypt: bool) -> bool:
         """ 選擇並開啟檔案 """
-        options = QFileDialog.Options()
+        options = QFileDialog.Option(0)
         # 取得路徑
         file_path, _ = QFileDialog.getOpenFileName(self, hint, "", "All Files (*)", options=options)
         if not file_path: return False # 取消
@@ -1472,7 +1442,7 @@ class MainWindow(QMainWindow):
 
     def action_save_as(self):
         """ 另存普通檔案 """
-        options = QFileDialog.Options()
+        options = QFileDialog.Option(0)
         # 取得位址
         file_path, _ = QFileDialog.getSaveFileName(self, "另存普通檔案", "", "All Files (*)", options=options)
         if not file_path: return  # 使用者按取消
@@ -1493,7 +1463,7 @@ class MainWindow(QMainWindow):
         if not self._ensure_password(): return
         hint = "另存加密檔案"
         # 取得位址
-        options = QFileDialog.Options()
+        options = QFileDialog.Option(0)
         file_path, _ = QFileDialog.getSaveFileName(self, hint, "", "All Files (*)", options=options)
         if not file_path: return  # 使用者按取消
         self.file_path = file_path
@@ -1507,7 +1477,7 @@ class MainWindow(QMainWindow):
             # 同action_save_as_crypted
             if (self.file_path is None):
                 hint = "另存加密檔案"
-                options = QFileDialog.Options()
+                options = QFileDialog.Option(0)
                 file_path, _ = QFileDialog.getSaveFileName(self, "另存加密檔案", "", "All Files (*)", options=options)
                 if not file_path: return False # 使用者按取消
             # 同action_save_crypted
@@ -1522,7 +1492,7 @@ class MainWindow(QMainWindow):
         if (self.file_path is not None):
             return self._save_file(self.file_path, hint="儲存普通檔案", encrypt=False)
         # 同action_save_as
-        options = QFileDialog.Options()
+        options = QFileDialog.Option(0)
         file_path, _ = QFileDialog.getSaveFileName(self, "另存普通檔案", "", "All Files (*)", options=options)
         if not file_path: return False # 使用者按取消
         self.file_path = file_path
@@ -1626,10 +1596,10 @@ class MainWindow(QMainWindow):
                     self,
                     "檔案加密失敗",
                     f"檔案 {fname} 重新加密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fname} 將無法讀取",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
                 )
-                if reply == QMessageBox.No: # 停止整個更改流程
+                if reply == QMessageBox.StandardButton.No: # 停止整個更改流程
                     QMessageBox.information(self, "取消", "主密碼更改已取消")
                     # 錯誤發生時 也確保所有密碼被清除
                     secure_clear(new_password_bytearray)
@@ -1786,8 +1756,8 @@ class MainWindow(QMainWindow):
         self._clear_master_password()
         a0.accept()
 
-# pyinstaller --onefile --windowed --icon=main_icon.ico main.py
-# pyinstaller --onedir --windowed --icon=main_icon.ico main.py
+# pyinstaller --onefile --exclude-module PyQt5 --exclude-module PyQt6 --windowed --icon=main_icon.ico main.py
+# pyinstaller --onedir --exclude-module PyQt5 --exclude-module PyQt6 --windowed --icon=main_icon.ico main.py
 if __name__ == "__main__":
     with Code_Timer("init"):
         file_to_open = None
@@ -1797,9 +1767,9 @@ if __name__ == "__main__":
         # 傳遞file_to_open
         window = MainWindow(file_to_open=file_to_open)
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 # setting: color/color_theme/verify_password_first...
-# try Open SSL in the next version
 # change_master_password 解密失敗-取消更改-前面已經重新加密的會無法復原
-# 必須先解密全部-詢問使用者-再全部重新加密
+# 必須先解密全部-詢問使用者-再全部重新加密 🖼️ 最佳化Highlighter的部分
+# V2.0.1: 移除從未啟用過的mdpreviewer, 改用Pyside6, 加入dll
