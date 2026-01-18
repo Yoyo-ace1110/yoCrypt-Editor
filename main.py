@@ -1795,3 +1795,4 @@ if __name__ == "__main__":
     sys.exit(app.exec_())
 
 # setting: color/color_theme/verify_password_first...
+# try Open SSL in the next version
