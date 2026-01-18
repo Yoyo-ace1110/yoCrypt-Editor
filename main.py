@@ -7,9 +7,9 @@ from PyQt5.QtGui import (
     QTextCursor, QTextDocument, QSyntaxHighlighter, QKeyEvent, 
     QTextCharFormat, QColor, QFont, QInputMethodEvent, QKeySequence, 
 )
-from yotools200.yoCrypt import yoCrypt_init, hash_password, verify_password, yoAES
+from yoCryptCpp import * # pyright: ignore[reportWildcardImportFromLibrary]
 from yotools200.utils import resource_path, Code_Timer
-yoCrypt_init(360000, 16, 32, "utf-8")
+yoCrypt_init(360000, 16, 32)
 
 encoding = "utf-8"
 password_file = resource_path("password.txt")
@@ -57,8 +57,10 @@ class PasswordPrompt(QDialog):
         if self.locked:
             QMessageBox.warning(self, "請稍候", "您輸入錯誤太多次 請等待30秒後再試")
             return
-        password = self.input.text()
+        raw_password_str = self.input.text()
+        password = bytearray(raw_password_str, encoding)
         self.input.clear()
+        del raw_password_str
         try:
             # 讀取hashed_password
             hash_file = open(password_file, "r")
@@ -67,10 +69,12 @@ class PasswordPrompt(QDialog):
             # 驗證成功
             if verify_password(password, stored_hash):
                 self.success = True
-                self.password = bytearray(password, encoding)
+                self.password = password
+                del password
                 self.accept()
             # 驗證失敗
             else:
+                secure_clear(password)
                 self.fail_count += 1
                 if self.fail_count >= 5:
                     self.locked = True
@@ -1333,9 +1337,7 @@ class MainWindow(QMainWindow):
 
     def _clear_master_password(self):
         """ 主密碼清理 """
-        if isinstance(self.password, bytearray):
-            for i in range(len(self.password)):
-                self.password[i] = 0 
+        secure_clear(self.password)
         self.password = bytearray()
 
     def _auto_highlight(self, file_path: str):
@@ -1557,10 +1559,13 @@ class MainWindow(QMainWindow):
         with open(os.path.join(filedirname, "password.txt"), "r", encoding="utf-8") as f:
             stored_hash = f.read().strip()
         if not verify_password(old_password_for_verification, stored_hash):
-            del old_password_for_verification # 驗證失敗 清除 bytearray 引用
+            # 驗證失敗 清除 bytearray 引用
+            secure_clear(old_password_for_verification)
+            del old_password_for_verification 
             QMessageBox.warning(self, "錯誤", "舊密碼錯誤！")
             return
         # 驗證成功 清除 bytearray 引用
+        secure_clear(old_password_for_verification)
         del old_password_for_verification 
         
         # 新密碼輸入與確認
@@ -1571,36 +1576,36 @@ class MainWindow(QMainWindow):
             dialog = QInputDialog(self)
             dialog.setWindowTitle("更改主密碼")
             dialog.setLabelText("請輸入新密碼: ")
-            dialog.setTextEchoMode(QLineEdit.Password)
+            dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
             if not dialog.exec_(): return # cancel
             new_password_str = dialog.textValue()
             _clear_dialog_input(dialog) # 清除 UI 輸入
+            new_password_bytearray = bytearray(new_password_str, encoding)
             
             # 確認新密碼
             dialog = QInputDialog(self)
             dialog.setWindowTitle("更改主密碼")
             dialog.setLabelText("請確認新密碼:")
-            dialog.setTextEchoMode(QLineEdit.Password)
+            dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
             if not dialog.exec_(): return # cancel
             confirm_password_str = dialog.textValue()
             _clear_dialog_input(dialog) # 清除 UI 輸入
+            confirm_password_bytearray = bytearray(new_password_str, encoding)
 
+            del new_password_str, confirm_password_str
+            
             # 驗證與錯誤處理
-            if not new_password_str or not confirm_password_str: 
+            if not new_password_bytearray or not confirm_password_bytearray: 
                 QMessageBox.warning(self, "錯誤", "密碼不能為空")
-                new_password_str = ""
-                confirm_password_str = ""
                 continue
-            if new_password_str != confirm_password_str:
+            if new_password_bytearray != confirm_password_bytearray:
                 QMessageBox.warning(self, "錯誤", "兩次輸入的密碼不一致")
-                new_password_str = ""
-                confirm_password_str = ""
                 continue
             break
         
-        # 密碼轉換與清除
-        new_password_bytearray = bytearray(new_password_str, encoding)
-        del confirm_password_str # 清除臨時 str 變數的引用
+        # 密碼清除
+        secure_clear(confirm_password_bytearray)
+        del confirm_password_bytearray
         
         # 更新 Files 內所有 txt 檔案
         for fname in os.listdir(os.path.join(filedirname, "Files")):
@@ -1627,8 +1632,8 @@ class MainWindow(QMainWindow):
                 if reply == QMessageBox.No: # 停止整個更改流程
                     QMessageBox.information(self, "取消", "主密碼更改已取消")
                     # 錯誤發生時 也確保所有密碼被清除
+                    secure_clear(new_password_bytearray)
                     del new_password_bytearray
-                    del new_password_str
                     return 
                 continue
 
@@ -1636,8 +1641,8 @@ class MainWindow(QMainWindow):
         self._clear_master_password() 
         self.password = new_password_bytearray
         with open(os.path.join(filedirname, "password.txt"), "w", encoding="utf-8") as f:
-            f.write(hash_password(new_password_str))
-        del new_password_str
+            f.write(hash_password(new_password_bytearray))
+        del new_password_bytearray
         
         QMessageBox.information(self, "完成", "主密碼已更新 所有txt已重新加密")
 
@@ -1796,3 +1801,5 @@ if __name__ == "__main__":
 
 # setting: color/color_theme/verify_password_first...
 # try Open SSL in the next version
+# change_master_password 解密失敗-取消更改-前面已經重新加密的會無法復原
+# 必須先解密全部-詢問使用者-再全部重新加密
