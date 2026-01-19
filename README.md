@@ -1,11 +1,10 @@
 # yoCrypt-Editor
 
-<p align="center">
-  <img src="https://img.shields.io/github/v/release/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=blue" alt="Release">
-  <img src="https://img.shields.io/github/license/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=important" alt="License">
-  <img src="https://img.shields.io/github/languages/top/Yoyo-ace1110/yoCrypt-Editor?style=flat-square" alt="Top Language">
-  <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square&logo=windows" alt="Platform">
-</p>
+![Release](https://img.shields.io/github/v/release/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=blue)
+![License](https://img.shields.io/github/license/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=important)
+![Top Language](https://img.shields.io/github/languages/top/Yoyo-ace1110/yoCrypt-Editor?style=flat-square)
+![Platform](https://img.shields.io/badge/Platform-Windows-blue?style=flat-square&logo=windows)
+[![View Site](https://img.shields.io/badge/View-Live_Demo-green?style=flat-square&logo=github)](https://Yoyo-ace1110.github.io/yoCrypt-Editor/)
 
 ## 🎨 Screenshots(軟體截圖)
 
