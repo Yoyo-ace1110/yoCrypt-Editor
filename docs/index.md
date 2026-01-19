@@ -8,7 +8,7 @@
   <a href="https://Yoyo-ace1110.github.io/yoCrypt-Editor/"><img src="https://img.shields.io/badge/Official%20Site-Live%20Demo-green?style=flat-square&logo=github" alt="View Site"></a>
 </p>
 
-## 🎨 Screenshots(軟體截圖)
+## 🎨 Screenshots
 
 <p align="center">
   <img src="./assets/main_ui.png" alt="yoCrypt-Editor Main UI">
