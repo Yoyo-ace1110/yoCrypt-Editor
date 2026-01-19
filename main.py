@@ -1,4 +1,5 @@
 # Copyright (C) 2026 Yoyo-ace1110
+from PySide6.QtGui import QHideEvent
 import sys, os, qdarktheme 
 from enum import Enum
 from abc import abstractmethod, ABCMeta
@@ -13,7 +14,7 @@ encoding = "utf-8"
 password_file = resource_path("password.txt")
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
-default_font_size = 4
+default_font_size = 3
 window: "MainWindow"
 
 # 函數
@@ -123,9 +124,15 @@ class Tab:
 
     def _handle_text_change(self):
         """ 處理文字變更事件 """
-        if self.is_dirty: return
-        self.is_dirty = True
-        self.update_title()
+        if not self.is_dirty: 
+            # 未儲存的變更
+            self.is_dirty = True
+            self.update_title()
+        # 是不是目前的視窗 
+        if self.index == self.main.tab_index:
+            # 檢查 find && replace
+            if self.main.is_finding: self.main.find_bar.update_search_results()
+            if self.main.is_replacing: self.main.replace_bar.update_search_results()
 
     def zoom_in(self, size: int = 1):
         """ 放大字體 """
@@ -386,6 +393,9 @@ class FR_Bar(QWidget):
         else:
             text = f"-/{self.match_count}"
             self._disable_buttons(False)
+        # 重新計算self.match_index
+        self.match_index = self._find_current_index(search_text)
+        text = f"{self.match_index}/{self.match_count}" if self.match_count else "查無結果"
         self.find_result.setText(text)
 
     def action_same_case(self):
@@ -432,7 +442,6 @@ class FR_Bar(QWidget):
         cursor.setPosition(origin_pos+len(replace_text))
         self.main_window.text_edit.setTextCursor(cursor)
         self.action_find_next()
-        self.update_search_results()
         # dirty
         self.main_window.tab.is_dirty = True
         self.main_window.tab.update_title()
@@ -486,14 +495,23 @@ class FR_Bar(QWidget):
             # dirty
             self.main_window.tab.is_dirty = True
             self.main_window.tab.update_title()
-        self.update_search_results()
-
+            
 class FindBar(FR_Bar):
     """ Find function """
     def __init__(self, main_window: "MainWindow"):
         super().init(main_window)
         super().init_find_bar()
         self.main_layout.addStretch(1)
+
+    def showEvent(self, event: QShowEvent) -> None:
+        """ 顯示事件 """
+        self.main_window.is_finding = True
+        return super().showEvent(event)
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        """ 隱藏事件 """
+        self.main_window.is_finding = False
+        return super().hideEvent(event)
 
 class ReplaceBar(FR_Bar):
     """ Replace function """
@@ -502,6 +520,16 @@ class ReplaceBar(FR_Bar):
         super().init_find_bar()
         super().init_replace_bar()
         self.main_layout.addStretch(1)
+
+    def showEvent(self, event: QShowEvent) -> None:
+        """ 顯示事件 """
+        self.main_window.is_replacing = True
+        return super().showEvent(event)
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        """ 隱藏事件 """
+        self.main_window.is_replacing = False
+        return super().hideEvent(event)
 
 # 高亮器 python main.py ./Test_higlighters/test.md
 class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): # pyright: ignore[reportGeneralTypeIssues]
@@ -721,7 +749,7 @@ class PyHighlighter(Highlighter):
         for i, f in enumerate(self.line):
             if f is None: continue
             self.setFormat(i, 1, f)
-            
+     
 class MdHighlighter(Highlighter):
     """ Highlighter for Markdown """
     No_State = -1         # None
@@ -1033,6 +1061,8 @@ class MainWindow(QMainWindow):
         self.theme: Theme = Theme.dark     # 預設色彩主題(深色)
         self.last_find_text = ""           # 上次的搜尋關鍵字
         self.last_replace_text = ""        # 上次的取代關鍵字
+        self.is_finding: bool = False
+        self.is_replacing: bool = False
         # 初始化介面
         self.init_Tab()
         self.init_ui()
@@ -1578,7 +1608,7 @@ class MainWindow(QMainWindow):
         secure_clear(confirm_password_bytearray)
         del confirm_password_bytearray
         
-        # 更新 Files 內所有 txt 檔案
+        # 重新加密 Files 內所有 txt 檔案
         for fname in os.listdir(os.path.join(filedirname, "Files")):
             if (not fname.endswith(".txt")) or (fname == "password.txt"): 
                 continue
@@ -1721,20 +1751,31 @@ class MainWindow(QMainWindow):
 
     def action_auto_highlight(self):
         """ 自動判斷文件格式並高亮 """
+        self.text_edit.blockSignals(True)
         if self.file_path is None: 
             return self._auto_highlight("untitled.txt")
         self._auto_highlight(self.file_path)
+        self.text_edit.blockSignals(False)
     
     def action_disable_highlight(self):
+        """ 禁用highlighter """
+        if self.highlighter is None: return
+        self.text_edit.blockSignals(True)
+        self.highlighter.setDocument(None)
         self.highlighter = None
+        self.text_edit.blockSignals(False)
     
     def action_highlight_as_python(self):
         """ 當作python source file編輯 """
-        self.highlighter = PyHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
+        self.text_edit.blockSignals(True)
+        self.highlighter = PyHighlighter(self.text_edit.document())
+        self.text_edit.blockSignals(False)
         
     def action_highlight_as_markdown(self):
         """ 當作python source file編輯 """
-        self.highlighter = MdHighlighter(self.text_edit.document()) # pyright: ignore[reportArgumentType]
+        self.text_edit.blockSignals(True)
+        self.highlighter = MdHighlighter(self.text_edit.document())
+        self.text_edit.blockSignals(False)
 
     def switch_next_tab(self):
         """ 切換至下一個分頁 """
@@ -1770,10 +1811,17 @@ if __name__ == "__main__":
     window.show()
     sys.exit(app.exec())
 
+# --- TODO: ---
 # setting: color/color_theme/verify_password_first...
 
-# --- bug ---
-# 數有多少個match的部分有問題，沒在更新
+# --- FIXME: ---
 # change_master_password 解密失敗-取消更改-前面已經重新加密的會無法復原
-# 必須先解密全部-詢問使用者-再全部重新加密 🖼️ 最佳化Highlighter的部分
-# V2.0.1: 移除從未啟用過的mdpreviewer, 改用Pyside6, 加入dll
+# 必須先解密全部-詢問使用者-再全部重新加密 
+# 🖼️ 最佳化Highlighter的部分
+
+# V2.0.3: 
+# 修掉find/replace中match的bug
+# 去掉yoCrypt.py
+# 避免更改highlighter時改到is_dirty
+# 解決disable highlight 無效的問題
+# 提示若輸入過密碼，還是restart電腦後才最安全，否則有傾印風險
