@@ -7,17 +7,17 @@
   <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square&logo=windows" alt="Platform">
 </p>
 
+## 🎨 Screenshots(軟體截圖)
+
+<p align="center">
+  <img src="assets/main_ui.png" alt="yoCrypt-Editor Main UI">
+</p>
+
 ---
 
 # English
 
 **yoCrypt-Editor** is a high-performance, lightweight text editor designed for simplicity and security. By combining the flexibility of Python with the computational power of C++, it provides industrial-grade encryption for your private notes in a clean, distraction-free environment.
-
-## 🎨 Screenshots
-
-<p align="center">
-  <img src="assets/main_ui.png" alt="yoCrypt-Editor Main UI">
-</p>
 
 ## ✨ Key Features
 
@@ -66,13 +66,7 @@ This project is released under terms designed to ensure transparency and securit
 
 # 繁體中文
 
-**yoCrypt-Editor** 是一款旨在建立**輕量、快速、介面簡潔**，並整合**工業級加密功能**的文字編輯器。它結合了 Python 的開發彈性與 C++ 的運算效能，為您的私密文字提供最可靠的保護。
-
-## 🎨 軟體截圖 (Screenshots)
-
-<p align="center">
-  <img src="assets/main_ui.png" alt="yoCrypt-Editor Main UI">
-</p>
+**yoCrypt-Editor** 是一款旨在建立**輕量、快速、介面簡潔**，並整合**加密功能**的文字編輯器。它結合了 Python 的開發彈性與 C++ 的運算效能，為您的私人文件提供最可靠的保護。
 
 ## ✨ 主要特性 (Features)
 
@@ -117,4 +111,5 @@ Copyright (c) 2026 Yoyo-ace1110. All Rights Reserved.
 - [cite_start]**禁止商業行為**：嚴禁任何形式的商業銷售、出租或作為收費服務的一部分 [cite: 6]。
 - [cite_start]**免責聲明**：本軟體按「原樣」提供，作者不承擔任何使用後果或損害賠償 [cite: 8, 9, 10]。
 - [cite_start]欲了解完整授權細節，請參閱 [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt) [cite: 11]。
+
 
