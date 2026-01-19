@@ -1819,9 +1819,5 @@ if __name__ == "__main__":
 # 必須先解密全部-詢問使用者-再全部重新加密 
 # 🖼️ 最佳化Highlighter的部分
 
-# V2.0.3: 
-# 修掉find/replace中match的bug
-# 去掉yoCrypt.py
-# 避免更改highlighter時改到is_dirty
-# 解決disable highlight 無效的問題
-# 提示若輸入過密碼，還是restart電腦後才最安全，否則有傾印風險
+# V2.0.4: 
+# 說明: 官方旺站更新速度會略慢於github
