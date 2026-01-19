@@ -10,7 +10,7 @@
 ## 🎨 Screenshots(軟體截圖)
 
 <p align="center">
-  <img src="assets/main_ui.png" alt="yoCrypt-Editor Main UI">
+  <img src="./docs/assets/main_ui.png" alt="yoCrypt-Editor Main UI">
 </p>
 
 ---
