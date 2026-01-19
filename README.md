@@ -70,11 +70,11 @@ This project is released under terms designed to ensure transparency and securit
 
 ## ✨ 主要特性 (Features)
 
-- **極致輕量與快速**：優化的啟動速度與低資源佔用，讓文字處理流暢無負擔。
-- **簡潔 UI 設計**：基於 **PySide6** 與 **QDarkTheme**，提供現代化且專注的作業環境。
-- **內建強大加密**：整合 **OpenSSL 3** 核心技術，確保您的資料安全性達到工業級標準。
-- **無縫執行體驗**：內建所有必要的 DLL，使用者無需額外安裝 OpenSSL 或 C++ 運行庫即可直接執行。
-- **開發者工具整合**：使用自有的 `yotools200.utils` 優化內部運作邏輯與資料處理。
+- **極致輕量與快速**: 優化的啟動速度與低資源佔用，讓文字處理流暢無負擔。
+- **簡潔 UI 設計**: 基於 **PySide6** 與 **QDarkTheme**，提供現代化且專注的作業環境。
+- **內建強大加密**: 整合 **OpenSSL 3** 核心技術，確保您的資料安全性達到工業級標準。
+- **無縫執行體驗**: 內建所有必要的 DLL，使用者無需額外安裝 OpenSSL 或 C++ 運行庫即可直接執行。
+- **開發者工具整合**: 使用自有的 `yotools200.utils` 優化內部運作邏輯與資料處理。
 
 ## 🚀 快速開始 (Getting Started)
 
@@ -82,7 +82,7 @@ This project is released under terms designed to ensure transparency and securit
 
 ## 🛠️ 開發與依賴 (Dependencies)
 
-如果你希望從源碼運行或進行開發，請確保環境中包含以下依賴：
+如果你希望從源碼運行或進行開發，請確保環境中包含以下依賴: 
 
 - **Python 3.x**
 - **PySide6**: 現代化的 Qt6 Python 綁定。
@@ -92,7 +92,7 @@ This project is released under terms designed to ensure transparency and securit
 
 ## 🐞 問題回報 (Report a Bug)
 
-如果您在使用過程中遇到任何問題，或有功能改進建議，歡迎透過以下管道聯繫：
+如果您在使用過程中遇到任何問題，或有功能改進建議，歡迎透過以下管道聯繫: 
 
 1. **GitHub Issues**: [直接在這裡提交 Issue](https://github.com/Yoyo-ace1110/yoCrypt-Editor/issues)
 2. **Email**: [liaojiayouy@gmail.com](mailto:liaojiayouy@gmail.com)
@@ -106,10 +106,8 @@ This project is released under terms designed to ensure transparency and securit
 
 Copyright (c) 2026 Yoyo-ace1110. All Rights Reserved.
 
-[cite_start]本專案採用的條款旨在確保專案的透明度與安全性 [cite: 1]：
-- [cite_start]**允許原樣散佈**：允許在保持檔案原始狀態且註明出處（附帶原作者連結）的前提下進行散佈 [cite: 4, 5]。
-- [cite_start]**禁止商業行為**：嚴禁任何形式的商業銷售、出租或作為收費服務的一部分 [cite: 6]。
-- [cite_start]**免責聲明**：本軟體按「原樣」提供，作者不承擔任何使用後果或損害賠償 [cite: 8, 9, 10]。
-- [cite_start]欲了解完整授權細節，請參閱 [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt) [cite: 11]。
-
-
+本專案採用的條款旨在確保專案的透明度與安全性: 
+- **允許原樣散佈**: 允許在保持檔案原始狀態且註明出處（附帶原作者連結）的前提下進行散佈。
+- **禁止商業行為**: 嚴禁任何形式的商業銷售、出租或作為收費服務的一部分。
+- **免責聲明**: 本軟體按「原樣」提供，作者不承擔任何使用後果或損害賠償。
+- 欲了解完整授權細節，請參閱 [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt)。
