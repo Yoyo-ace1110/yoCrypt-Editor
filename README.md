@@ -8,7 +8,7 @@
   <a href="https://Yoyo-ace1110.github.io/yoCrypt-Editor/"><img src="https://img.shields.io/badge/View-Live_Demo-green?style=flat-square&logo=github" alt="View Site"></a>
 </p>
 
-## 🎨 Screenshots(軟體截圖)
+## 🎨 Screenshots
 
 <p align="center">
   <img src="./docs/assets/main_ui.png" alt="yoCrypt-Editor Main UI">
@@ -112,3 +112,4 @@ Copyright (c) 2026 Yoyo-ace1110. All Rights Reserved.
 - **禁止商業行為**: 嚴禁任何形式的商業銷售、出租或作為收費服務的一部分。
 - **免責聲明**: 本軟體按「原樣」提供，作者不承擔任何使用後果或損害賠償。
 - 欲了解完整授權細節，請參閱 [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt)。
+
