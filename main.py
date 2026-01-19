@@ -1771,6 +1771,9 @@ if __name__ == "__main__":
     sys.exit(app.exec())
 
 # setting: color/color_theme/verify_password_first...
+
+# --- bug ---
+# 數有多少個match的部分有問題，沒在更新
 # change_master_password 解密失敗-取消更改-前面已經重新加密的會無法復原
 # 必須先解密全部-詢問使用者-再全部重新加密 🖼️ 最佳化Highlighter的部分
 # V2.0.1: 移除從未啟用過的mdpreviewer, 改用Pyside6, 加入dll
