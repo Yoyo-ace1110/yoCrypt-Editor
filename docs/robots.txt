@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://yoyo-ace1110.github.io/yoCrypt-Editor/sitemap.xml
