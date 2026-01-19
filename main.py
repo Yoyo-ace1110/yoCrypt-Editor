@@ -1812,9 +1812,17 @@ if __name__ == "__main__":
     sys.exit(app.exec())
 
 # --- TODO: ---
-# setting: color/color_theme/verify_password_first...
+# line_wrap_mode/clear_clipboard_on_exit/sucure_timeout/show_line_numbers
+# setting: 
+# color/color_theme/verify_password_first
+# default_font_size/default_highlighter
+# welcome_file/yoCrypt_init_param/FR
+# Font Family/line_wrap_mode/sucure_timeout
+# show_line_numbers
+# 區分同名檔案(標籤顯示完整路徑)
 
 # --- FIXME: ---
+# 遇到emoji highlighter有可能在"數字元時"數錯造成渲染錯誤
 # change_master_password 解密失敗-取消更改-前面已經重新加密的會無法復原
 # 必須先解密全部-詢問使用者-再全部重新加密 
 # 🖼️ 最佳化Highlighter的部分
