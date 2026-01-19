@@ -1,4 +1,4 @@
-yoCrypt-Editor (v2.0.1+)
+yoCrypt-Editor (v2.0.2+)
 Copyright (C) 2026 Yoyo-ace1110. All Rights Reserved.
 GitHub: https://github.com/Yoyo-ace1110/yoCrypt-Editor
 Contact: liaojiayouy@gmail.com
