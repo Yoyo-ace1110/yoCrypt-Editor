@@ -1,6 +1,6 @@
 title: yoCrypt-Editor
 description: A lightweight, secure text editor powered by PySide6 and OpenSSL 3.
-theme: jekyll-theme-slate
+theme: jekyll-theme-midnight
 
 include: ["en", "zh-TW"]
 
