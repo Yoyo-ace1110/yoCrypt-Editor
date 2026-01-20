@@ -1,3 +1,4 @@
+## [yoCrypt-Editor](https://yoyo-ace1110.github.io/yoCrypt-Editor/en/home)
 # Feature Guide
 
 yoCrypt-Editor focuses on a seamless encryption experience. Below are the detailed operations available under the **File** menu:

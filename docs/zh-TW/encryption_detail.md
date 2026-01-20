@@ -1,3 +1,4 @@
+## [yoCrypt-Editor](https://yoyo-ace1110.github.io/yoCrypt-Editor/zh-TW/home)
 # 加密技術細節
 
 yoCrypt-Editor 致力於提供全方位的資料保護。我們不「自行開發加密演算法」（以避免潛在的安全漏洞），而是採用經過業界標準驗證、實戰測試的加密演算法，以確保您的隱私萬無一失。

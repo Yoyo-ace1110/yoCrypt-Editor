@@ -1,4 +1,5 @@
-# 功能操作指南
+## [yoCrypt-Editor](https://yoyo-ace1110.github.io/yoCrypt-Editor/zh-TW/home)
+# 操作指南
 
 yoCrypt-Editor 的設計核心在於「透明的加密體驗」。以下是 **File (檔案)** 選單中各項功能的詳細說明: 
 

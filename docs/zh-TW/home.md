@@ -1,4 +1,4 @@
-# yoCrypt-Editor
+# [yoCrypt-Editor](https://yoyo-ace1110.github.io/yoCrypt-Editor/)
 
 <p align="center">
   <a href="https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases"><img src="https://img.shields.io/github/v/release/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=blue" alt="Release"></a>

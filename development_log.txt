@@ -21,3 +21,4 @@
 # 加入 本文(development_log.txt)
 # 修正 make_password.py
 # password.txt 預設密碼修正為 "abc" (不含引號)
+# 加入官網圖示 && 名稱
