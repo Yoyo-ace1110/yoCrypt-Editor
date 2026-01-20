@@ -15,5 +15,9 @@
 # 修復 新視窗的字型大小問題
 # 增進 Highlighter 的效率
 # 解決 遇到emojihighlighter可能("數字元時")出現錯誤的問題
-# 允許google搜尋到官網
-# 建立_config.yml, 更新sitemap.xml && robots.txt
+# 允許 google搜尋到官網
+# 建立 _config.yml, 更新sitemap.xml && robots.txt
+# 修正 .gitignore 的語法錯誤
+# 加入 本文(development_log.txt)
+# 修正 make_password.py
+# password.txt 預設密碼修正為 "abc" (不含引號)
