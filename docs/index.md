@@ -13,10 +13,10 @@
   <table align="center" style="border: none; border-collapse: collapse;">
     <tr style="border: none;">
       <td style="border: none; padding: 20px;">
-        <a href="./en/home.md" style="font-size: 1.5em; text-decoration: none;">English</a>
+        <a href="./en/home" style="font-size: 1.5em; text-decoration: none;">English</a>
       </td>
       <td style="border: none; padding: 20px;">
-        <a href="./zh-TW/home.md" style="font-size: 1.5em; text-decoration: none;">繁體中文</a>
+        <a href="./zh-TW/home" style="font-size: 1.5em; text-decoration: none;">繁體中文</a>
       </td>
     </tr>
   </table>
