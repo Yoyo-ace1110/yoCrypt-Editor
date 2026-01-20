@@ -1,1 +1,3 @@
 include: ["en", "zh-TW"]
+title: yoCrypt-Editor
+description: A lightweight, secure text editor powered by PySide6 and OpenSSL 3
