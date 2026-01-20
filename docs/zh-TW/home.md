@@ -30,11 +30,13 @@
 
 ## 📖 專案文件
 
-了解更多關於本編輯器的操作細節與安全技術: 
+了解更多關於本編輯器的操作細節與技術: 
 
-- **[功能操作指南](./encryption_features)**: 各項檔案存取功能與主密碼變更說明。
-- **[加密技術細節](./encryption_detail)**: 深入了解 AES-256-GCM 與記憶體安全機制。
-- [👈 返回語言選擇](../index)
+- ### [功能操作指南](./encryption_features): 
+  - Details on file operations and Master Password management.
+- ### [加密技術細節](./encryption_detail): 
+  - Deep dive into AES-256-GCM and memory security.
+- ### [👈 返回語言選擇頁面](../index)
 
 ## 🛠️ 開發與依賴 (Dependencies)
 
