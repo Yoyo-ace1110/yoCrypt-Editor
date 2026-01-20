@@ -2,14 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/</loc>
-    <lastmod>2026-01-19</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-01-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
+
   <url>
-    <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/zh-TW</loc>
-    <lastmod>2026-01-19</lastmod>
+    <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/zh-TW/home</loc>
+    <lastmod>2026-01-20</lastmod>
     <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/zh-TW/encryption_detail</loc>
+    <lastmod>2026-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/zh-TW/encryption_features</loc>
+    <lastmod>2026-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/en/home</loc>
+    <lastmod>2026-01-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/en/encryption_detail</loc>
+    <lastmod>2026-01-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://yoyo-ace1110.github.io/yoCrypt-Editor/en/encryption_features</loc>
+    <lastmod>2026-01-20</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 </urlset>

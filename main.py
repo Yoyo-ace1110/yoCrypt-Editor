@@ -1843,11 +1843,3 @@ if __name__ == "__main__":
 # 遇到emoji，highlighter可能("數字元時"數錯?)出現錯誤
 # change_master_password 解密失敗-取消更改-前面已經重新加密的會無法復原
 # 必須先解密全部-詢問使用者-再全部重新加密 
-
-# V2.0.4: 
-# 說明: 官方網站更新速度會略慢於github
-# 分開官網語言，分別加入home.md, encryption.md, features.md
-# 修復 highlight as ... 改到 is_dirty 狀態的問題
-# 修復 新視窗的字型大小問題
-# 增進 Highlighter 的效率
-# 解決 遇到emojihighlighter可能("數字元時")出現錯誤的問題

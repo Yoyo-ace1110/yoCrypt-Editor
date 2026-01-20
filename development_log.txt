@@ -6,6 +6,7 @@
 # 避免更改highlighter時改到is_dirty
 # 解決disable highlight 無效的問題
 # 提示若輸入過密碼，還是restart電腦後才最安全，否則有傾印風險
+# 建立sitemap && google3524e2fa87e535cd.html && robots.txt
 
 # V2.0.4: 
 # 說明: 官方網站更新速度會略慢於github
@@ -14,3 +15,5 @@
 # 修復 新視窗的字型大小問題
 # 增進 Highlighter 的效率
 # 解決 遇到emojihighlighter可能("數字元時")出現錯誤的問題
+# 允許google搜尋到官網
+# 建立_config.yml, 更新sitemap.xml && robots.txt

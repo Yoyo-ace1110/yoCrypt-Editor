@@ -1,3 +1,13 @@
+# 允許所有搜尋引擎爬取
 User-agent: *
 Allow: /
-Sitemap: https://yoyo-ace1110.github.io/yoCrypt-Editor/sitemap.xml
+
+# 允許爬取語言子目錄
+Allow: /en/
+Allow: /zh-TW/
+
+# 禁止爬取資產資料夾（選用，通常圖片不需要被單獨索引）
+# Disallow: /assets/
+
+# 指定 Sitemap 位置
+Sitemap: https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/docs/sitemap.xml
