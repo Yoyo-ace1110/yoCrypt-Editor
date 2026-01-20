@@ -20,5 +20,6 @@
 # 修正 .gitignore 的語法錯誤
 # 加入 本文(development_log.txt)
 # 修正 make_password.py
-# password.txt 預設密碼修正為 "abc" (不含引號)
-# 加入官網圖示 && 名稱
+# 修正 password.txt 預設密碼為 "abc" (不含引號)
+# 加入 官網圖示 && 名稱
+# 建立 404.md 並美化官網

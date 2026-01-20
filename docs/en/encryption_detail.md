@@ -1,3 +1,5 @@
+<link rel="shortcut icon" type="image/x-icon" href="https://yoyo-ace1110.github.io/yoCrypt-Editor/assets/favicon.ico">
+
 ## [yoCrypt-Editor](https://yoyo-ace1110.github.io/yoCrypt-Editor/en/home)
 # Encryption Technology Details
 
@@ -26,4 +28,4 @@ To protect against brute-force and dictionary attacks, we use **PBKDF2** (Passwo
 - **Safety Tip**: For maximum security when handling extremely sensitive data, we recommend **restarting your computer** to clear potential data remnants of encrypted information from memory and to avoid security risks associated with Memory Dumps.
 
 ---
-[👈 Back to Home](./home) | [👉 Feature Guide](./encryption_features)
+[👈 Back to Home](./home) | [👉 Encryption Features Guide](./encryption_features)

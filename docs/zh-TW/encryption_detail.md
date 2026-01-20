@@ -1,3 +1,5 @@
+<link rel="shortcut icon" type="image/x-icon" href="https://yoyo-ace1110.github.io/yoCrypt-Editor/assets/favicon.ico">
+
 ## [yoCrypt-Editor](https://yoyo-ace1110.github.io/yoCrypt-Editor/zh-TW/home)
 # 加密技術細節
 
@@ -23,4 +25,4 @@ yoCrypt-Editor 致力於提供全方位的資料保護。我們不「自行開�
 - 在處理極度敏感的資料時，為了達到最高安全性，我們建議 **重新啟動電腦**，以清除記憶體中加密資料的殘留數據，並避免記憶體傾印 (Memory Dump) 導致的洩密風險。
 
 ---
-[👈 返回首頁](./home) | [👉 功能導覽](./encryption_features)
+[👈 返回首頁](./home) | [👉 加密功能導覽](./encryption_features)

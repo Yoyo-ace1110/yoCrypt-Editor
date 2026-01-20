@@ -1,3 +1,26 @@
-include: ["en", "zh-TW"]
 title: yoCrypt-Editor
-description: A lightweight, secure text editor powered by PySide6 and OpenSSL 3
+description: A lightweight, secure text editor powered by PySide6 and OpenSSL 3.
+theme: jekyll-theme-hacker
+
+include: ["en", "zh-TW"]
+
+lang: zh-TW
+url: "https://yoyo-ace1110.github.io"
+baseurl: "/yoCrypt-Editor"
+logo: "/assets/favicon.ico"
+
+exclude:
+  - "*.spec"
+  - "*.lnk"
+  - "*.py"
+  - "*.mp4"
+  - "*.dll"
+  - "*.exe"
+  - "*.bat"
+  - "*.pyd"
+  - "*.cpp"
+  - "yotools200/"
+  - "Files/"
+  - "main/"
+  - "development_log.txt"
+  - "License.txt"

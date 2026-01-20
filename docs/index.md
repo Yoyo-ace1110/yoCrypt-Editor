@@ -1,3 +1,5 @@
+<link rel="shortcut icon" type="image/x-icon" href="https://yoyo-ace1110.github.io/yoCrypt-Editor/assets/favicon.ico">
+
 # Welcome to yoCrypt-Editor
 
 <p align="center">

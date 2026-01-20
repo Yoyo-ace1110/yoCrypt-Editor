@@ -1,3 +1,5 @@
+<link rel="shortcut icon" type="image/x-icon" href="https://yoyo-ace1110.github.io/yoCrypt-Editor/assets/favicon.ico">
+
 # [yoCrypt-Editor](https://yoyo-ace1110.github.io/yoCrypt-Editor/)
 
 <p align="center">
@@ -32,7 +34,7 @@
 
 了解更多關於本編輯器的操作細節與技術: 
 
-- ### [功能操作指南](./encryption_features): 
+- ### [加密功能導覽](./encryption_features): 
   - Details on file operations and Master Password management.
 - ### [加密技術細節](./encryption_detail): 
   - Deep dive into AES-256-GCM and memory security.
