@@ -531,7 +531,7 @@ class ReplaceBar(FR_Bar):
         self.main_window.is_replacing = False
         return super().hideEvent(event)
 
-# 高亮器 python main.py ./Test_higlighters/test.md
+# 高亮器
 class HighlighterMeta(type(QSyntaxHighlighter), ABCMeta): # pyright: ignore[reportGeneralTypeIssues]
     pass
 
@@ -698,12 +698,32 @@ class PyHighlighter(Highlighter):
         self.rules.append((self.pattern_number, self.format_number))
         self.rules.append((self.pattern_keywords, self.format_keyword))
 
+    def _update_highlightBlock(self):
+        """ 把緩衝區的狀態同步到高亮狀態 """
+        index = 0
+        # 遍歷 self.line 緩衝區
+        while index < len(self.line):
+            # 略過 None
+            if self.line[index] is None: 
+                index += 1
+                continue
+            start = index
+            current_format = self.line[index]
+            # 向右吃相同區塊
+            while True:
+                index += 1
+                if index >= len(self.line): break
+                if self.line[index] != current_format: break
+            # 區塊著色
+            self.setFormat(start, index-start, current_format)
+
     def highlightBlock(self, text: str| None):
         """ 對每一行文字進行高亮處理 """
         if text is None: return
         state = self.previousBlockState()
         # 初始化顏色表
-        self.line = [None for _ in text]
+        qt_len = len(text.encode('utf-16-le')) // 2
+        self.line = [None for _ in range(qt_len)]
         # 開始井號和引號的處理
         index = 0
         while index <= len(text):
@@ -735,21 +755,18 @@ class PyHighlighter(Highlighter):
         # 上色一般項目
         for pattern, format in self.rules:
             # 初始化index
-            match = pattern.match(text)
-            index = match.capturedStart() if match.hasMatch() else -1
-            while index >= 0:
+            matches = pattern.globalMatch(text)
+            while matches.hasNext():
                 # 上色並往下找
+                match = matches.next()
+                start = match.capturedStart()
                 length = match.capturedLength()
-                self._format_line(index, length, format, False)
-                match = pattern.match(text, index + length)
-                index = match.capturedStart() if match.hasMatch() else -1
+                self._format_line(start, length, format, False)
         # 再度設定BlockState
         self.setCurrentBlockState(state)
-        # 遍歷 self.line 緩衝區
-        for i, f in enumerate(self.line):
-            if f is None: continue
-            self.setFormat(i, 1, f)
-     
+        # 套用緩衝區設定
+        self._update_highlightBlock()
+
 class MdHighlighter(Highlighter):
     """ Highlighter for Markdown """
     No_State = -1         # None
@@ -902,6 +919,7 @@ class MdHighlighter(Highlighter):
     def is_escaped(self, index: int, text: str|None):
         """ 判斷是否應該跳脫 """
         if text is None: return False
+        if index == -1: return False
         # 計算跳脫數
         count = 0
         new_index = index-1
@@ -931,56 +949,40 @@ class MdHighlighter(Highlighter):
         # Full Line Rules
         for pattern, _format in self.full_line_rules:
             match = pattern.match(text)
-            # 不用處理
             if not match.hasMatch(): continue
             # 上色
             self.setFormat(0, len(text), _format) 
         # Partail Rules
         for pattern, group_dict in self.partial_rules:
-            match = pattern.match(text)
-            index = match.capturedStart() if match.hasMatch() else -1
-            while index >= 0:
-                # 跳脫
-                if self.is_escaped(index, text):
-                    match = pattern.match(text, index+1)
-                    index = match.capturedStart() if match.hasMatch() else -1
-                    continue
+            matches = pattern.globalMatch(text)
+            while matches.hasNext():
+                # 往下找下一個匹配
+                match = matches.next()
+                index = match.capturedStart()
+                # 跳脫字元
+                if self.is_escaped(index, text) and match.hasMatch(): continue
                 # 正常處理
                 for group_idx, _format in group_dict.items():
                     start = match.capturedStart(group_idx)
                     length = match.capturedLength(group_idx)
                     if start != -1 and length > 0: self.setFormat(start, length, _format)
-                
-                # 往下找下一個匹配
-                next_pos = index + match.capturedLength()
-                match = pattern.match(text, next_pos)
-                index = match.capturedStart() if match.hasMatch() else -1
-                
         # Inline Rules
         for pattern, _format in self.inline_rules:
-            match = pattern.match(text)
-            index = match.capturedStart() if match.hasMatch() else -1
-            while index >= 0:
+            matches = pattern.globalMatch(text)
+            while matches.hasNext():
+                # 往下找下一個匹配
+                match = matches.next()
+                index = match.capturedStart()
                 # 跳脫
-                if self.is_escaped(index, text):
-                    match = pattern.match(text, index+1)
-                    index = match.capturedStart() if match.hasMatch() else -1
-                    continue
+                if self.is_escaped(index, text) and match.hasMatch(): continue
                 # 正常處理
                 match_len = match.capturedLength()
                 if match_len > 0:
-                    # 獲取該位置現有的格式 (例如已經由標題規則設定的藍色)
-                    current_fmt = self.format(index)
                     # 建立新格式副本並合併 (Merge) 內聯樣式
-                    new_fmt = QTextCharFormat(current_fmt)
-                    new_fmt.merge(_format)
-                    self.setFormat(index, match_len, new_fmt)
-                
-                # 往下找下一個匹配
-                next_pos = index + match_len
-                match = pattern.match(text, next_pos)
-                index = match.capturedStart() if match.hasMatch() else -1
-                
+                    new_format = QTextCharFormat(self.format(index))
+                    new_format.merge(_format)
+                    self.setFormat(index, match_len, new_format)
+
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent: QWidget|None = None):
         """ 初始化CodeEditor """
@@ -1290,7 +1292,7 @@ class MainWindow(QMainWindow):
         # 密碼已存在
         while (not self.password):
             login = PasswordPrompt()
-            if (login.exec_() != QDialog.DialogCode.Accepted) or (not login.success): return False
+            if (login.exec() != QDialog.DialogCode.Accepted) or (not login.success): return False
             self.password = login.password
         return True
     
@@ -1417,7 +1419,7 @@ class MainWindow(QMainWindow):
         self.tabs.setCurrentIndex(new_index)
         self.tab_index = new_index
         self.tab.update_title()
-        self.text_edit.zoomIn(4)
+        self.tab.reset_zoom()
 
     def _open_file(self, hint: str, decrypt: bool) -> bool:
         """ 選擇並開啟檔案 """
@@ -1543,7 +1545,7 @@ class MainWindow(QMainWindow):
         dialog.setWindowTitle("更改主密碼")
         dialog.setLabelText("請輸入舊密碼:")
         dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
-        if not dialog.exec_(): return # cancel
+        if not dialog.exec(): return # cancel
         
         old_password_str = dialog.textValue() # 暫存為 str
         _clear_dialog_input(dialog) # 立即清除 UI 輸入
@@ -1578,7 +1580,7 @@ class MainWindow(QMainWindow):
             dialog.setWindowTitle("更改主密碼")
             dialog.setLabelText("請輸入新密碼: ")
             dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
-            if not dialog.exec_(): return # cancel
+            if not dialog.exec(): return # cancel
             new_password_str = dialog.textValue()
             _clear_dialog_input(dialog) # 清除 UI 輸入
             new_password_bytearray = bytearray(new_password_str, encoding)
@@ -1588,7 +1590,7 @@ class MainWindow(QMainWindow):
             dialog.setWindowTitle("更改主密碼")
             dialog.setLabelText("請確認新密碼:")
             dialog.setTextEchoMode(QLineEdit.EchoMode.Password)
-            if not dialog.exec_(): return # cancel
+            if not dialog.exec(): return # cancel
             confirm_password_str = dialog.textValue()
             _clear_dialog_input(dialog) # 清除 UI 輸入
             confirm_password_bytearray = bytearray(new_password_str, encoding)
@@ -1752,30 +1754,46 @@ class MainWindow(QMainWindow):
     def action_auto_highlight(self):
         """ 自動判斷文件格式並高亮 """
         self.text_edit.blockSignals(True)
+        self.text_edit.document().blockSignals(True)
         if self.file_path is None: 
             return self._auto_highlight("untitled.txt")
         self._auto_highlight(self.file_path)
+        QApplication.processEvents()
         self.text_edit.blockSignals(False)
+        self.text_edit.document().blockSignals(False)
     
     def action_disable_highlight(self):
         """ 禁用highlighter """
         if self.highlighter is None: return
         self.text_edit.blockSignals(True)
+        self.text_edit.document().blockSignals(True)
         self.highlighter.setDocument(None)
         self.highlighter = None
+        QApplication.processEvents()
         self.text_edit.blockSignals(False)
-    
+        self.text_edit.document().blockSignals(False)
+
     def action_highlight_as_python(self):
         """ 當作python source file編輯 """
         self.text_edit.blockSignals(True)
+        self.text_edit.document().blockSignals(True)
+        if self.highlighter is not None:
+            self.highlighter.setDocument(None)
         self.highlighter = PyHighlighter(self.text_edit.document())
+        QApplication.processEvents()
         self.text_edit.blockSignals(False)
-        
+        self.text_edit.document().blockSignals(False)
+
     def action_highlight_as_markdown(self):
         """ 當作python source file編輯 """
         self.text_edit.blockSignals(True)
+        self.text_edit.document().blockSignals(True)
+        if self.highlighter is not None:
+            self.highlighter.setDocument(None)
         self.highlighter = MdHighlighter(self.text_edit.document())
+        QApplication.processEvents()
         self.text_edit.blockSignals(False)
+        self.text_edit.document().blockSignals(False)
 
     def switch_next_tab(self):
         """ 切換至下一個分頁 """
@@ -1821,15 +1839,15 @@ if __name__ == "__main__":
 # show_line_numbers/files_path
 # 區分同名檔案(標籤顯示完整路徑)
 
-# --- FIXME: ---
-# 新視窗的字型大小問題(需reset_zoom或update_zoom?)
-# 遇到emoji highlighter有可能在"數字元時"數錯造成渲染錯誤
+# --- FIXME: --- 🖼️
+# 遇到emoji，highlighter可能("數字元時"數錯?)出現錯誤
 # change_master_password 解密失敗-取消更改-前面已經重新加密的會無法復原
 # 必須先解密全部-詢問使用者-再全部重新加密 
-# 🖼️ 最佳化Highlighter的部分
 
 # V2.0.4: 
 # 說明: 官方網站更新速度會略慢於github
-# 分開官網語言，分別加入home.md, encryption.md
+# 分開官網語言，分別加入home.md, encryption.md, features.md
 # 修復 highlight as ... 改到 is_dirty 狀態的問題
-# 
+# 修復 新視窗的字型大小問題
+# 增進 Highlighter 的效率
+# 解決 遇到emojihighlighter可能("數字元時")出現錯誤的問題

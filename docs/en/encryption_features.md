@@ -18,4 +18,4 @@ The editor manages both plain text and encrypted files based on your security ne
     A core maintenance tool that updates your security credentials. Upon execution, the system prompts for a new password and automatically **re-encrypts all files** within the "Project/Files" directory using the new key.
 
 ---
-[👈 Back to Home](./home.md) | [👉 Encryption Details](./encryption.md)
+[👈 Back to Home](./home) | [👉 Encryption Details](./encryption_detail)

@@ -32,9 +32,9 @@ To get started, visit the [GitHub Releases](https://github.com/Yoyo-ace1110/yoCr
 
 Learn more about the operation details and security technologies of this editor:
 
-- **[Feature Guide](./features.md)**: Details on file operations and Master Password management.
-- **[Encryption Technology](./encryption.md)**: Deep dive into AES-256-GCM and memory security.
-- [👈 Back to Language Selection](../index.md)
+- **[Feature Guide](./encryption_features)**: Details on file operations and Master Password management.
+- **[Encryption Technology](./encryption_detail)**: Deep dive into AES-256-GCM and memory security.
+- [👈 Back to Language Selection](../index)
 
 ## 🛠️ Development & Dependencies
 

@@ -25,4 +25,4 @@ To protect against brute-force and dictionary attacks, we use **PBKDF2** (Passwo
 - **Safety Tip**: For maximum security when handling extremely sensitive data, we recommend **restarting your computer** to clear potential data remnants of encrypted information from memory and to avoid security risks associated with Memory Dumps.
 
 ---
-[👈 Back to Home](./home.md) | [👉 Feature Guide](./features.md)
+[👈 Back to Home](./home) | [👉 Feature Guide](./encryption_features)

@@ -1,0 +1,16 @@
+從V2.0.3開始
+
+# V2.0.3: 
+# 修掉find/replace中match的bug
+# 去掉yoCrypt.py
+# 避免更改highlighter時改到is_dirty
+# 解決disable highlight 無效的問題
+# 提示若輸入過密碼，還是restart電腦後才最安全，否則有傾印風險
+
+# V2.0.4: 
+# 說明: 官方網站更新速度會略慢於github
+# 分開官網語言，分別加入home.md, encryption.md, features.md
+# 修復 highlight as ... 改到 is_dirty 狀態的問題
+# 修復 新視窗的字型大小問題
+# 增進 Highlighter 的效率
+# 解決 遇到emojihighlighter可能("數字元時")出現錯誤的問題
