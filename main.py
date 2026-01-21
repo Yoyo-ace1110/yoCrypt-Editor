@@ -1546,7 +1546,7 @@ class MainWindow(QMainWindow):
                 self,
                 "檔案加密失敗",
                 hint, 
-                fname.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No
             )
             if reply == QMessageBox.StandardButton.No: # 停止整個更改流程
@@ -1643,17 +1643,38 @@ class MainWindow(QMainWindow):
                 # 問使用者是否繼續
                 hint = f"檔案 {fpath} 解密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fpath} 將無法讀取"
                 if _ask_for_continue_change_password(e, hint): return
-                continue
+
         # 嘗試加密儲存
-        for fname, decrypted_text in enumerate(decrypted_contents):
+        error_occurred = False
+        if not decrypted_contents: return
+        for fpath, decrypted_text in decrypted_contents.items():
             try: 
                 new_encrypted = yoAES.encrypt(decrypted_text, new_password_bytearray)
                 with open(fpath, "w", encoding="utf-8") as f:
                     f.write(new_encrypted)
             except Exception as e:
                 hint = f"檔案 {fpath} 重新加密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fpath} 將無法讀取"
-                if _ask_for_continue_change_password(e, hint): return
-                continue
+                if _ask_for_continue_change_password(e, hint): 
+                    error_occurred = True
+                    break
+        
+        # 復原程序 
+        if error_occurred:
+            QMessageBox.warning(self, "復原", "正在嘗試使用舊密碼還原檔案...")
+            for fpath, decrypted_text in decrypted_contents.items():
+                # 用舊密碼加密回去
+                try:
+                    rollback_encrypted = yoAES.encrypt(decrypted_text, self.password)
+                    with open(fpath, "w", encoding="utf-8") as f:
+                        f.write(rollback_encrypted)
+                # 連還原都失敗
+                except Exception as rollback_e:
+                    QMessageBox.critical(self, "嚴重錯誤", f"無法還原檔案 {fpath}，請手動檢查備份！")
+        
+        # 清除明文
+        decrypted_text = ""
+        decrypted_contents.clear()
+        del decrypted_contents
 
         # 更新密碼與清理
         self._clear_master_password() 
