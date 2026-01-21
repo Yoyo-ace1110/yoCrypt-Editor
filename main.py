@@ -1539,6 +1539,23 @@ class MainWindow(QMainWindow):
         """ 更改主密碼 """
         if not self._ensure_password(): return
         if not self._dirty_warning_success(): return
+        # 內部函數
+        def _ask_for_continue_change_password(e: Exception, hint: str) -> bool:
+            """ 詢問使用者是否繼續更改主密碼 """
+            reply = QMessageBox.question(
+                self,
+                "檔案加密失敗",
+                hint, 
+                fname.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No: # 停止整個更改流程
+                QMessageBox.information(self, "取消", "主密碼更改已取消")
+                # 錯誤發生時 也確保所有密碼被清除
+                secure_clear(new_password_bytearray)
+                del new_password_bytearray
+                return True
+            return False
 
         # 舊密碼輸入與驗證
         dialog = QInputDialog(self)
@@ -1610,34 +1627,32 @@ class MainWindow(QMainWindow):
         secure_clear(confirm_password_bytearray)
         del confirm_password_bytearray
         
-        # 重新加密 Files 內所有 txt 檔案
+        decrypted_contents: dict[str, str] = {}
+        # 嘗試解密 Files 內所有 txt 檔案
         for fname in os.listdir(os.path.join(filedirname, "Files")):
-            if (not fname.endswith(".txt")) or (fname == "password.txt"): 
-                continue
+            # 略過非 txt 跟 password
+            if fname == "password.txt" or not fname.endswith(".txt"):  continue
             fpath = os.path.join(filedirname, "Files", fname)
+            # 解密
             try:
-                # 解密&重新加密
                 with open(fpath, "r", encoding="utf-8") as f:
                     encrypted_data = f.read()
-                plain_text = yoAES.decrypt(encrypted_data, self.password)
-                new_encrypted = yoAES.encrypt(plain_text, new_password_bytearray)
+                decrypted_text = yoAES.decrypt(encrypted_data, self.password)
+                decrypted_contents[fpath] = decrypted_text
+            except Exception as e:
+                # 問使用者是否繼續
+                hint = f"檔案 {fpath} 解密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fpath} 將無法讀取"
+                if _ask_for_continue_change_password(e, hint): return
+                continue
+        # 嘗試加密儲存
+        for fname, decrypted_text in enumerate(decrypted_contents):
+            try: 
+                new_encrypted = yoAES.encrypt(decrypted_text, new_password_bytearray)
                 with open(fpath, "w", encoding="utf-8") as f:
                     f.write(new_encrypted)
             except Exception as e:
-                # 問使用者是否繼續
-                reply = QMessageBox.question(
-                    self,
-                    "檔案加密失敗",
-                    f"檔案 {fname} 重新加密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fname} 將無法讀取",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No
-                )
-                if reply == QMessageBox.StandardButton.No: # 停止整個更改流程
-                    QMessageBox.information(self, "取消", "主密碼更改已取消")
-                    # 錯誤發生時 也確保所有密碼被清除
-                    secure_clear(new_password_bytearray)
-                    del new_password_bytearray
-                    return 
+                hint = f"檔案 {fpath} 重新加密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fpath} 將無法讀取"
+                if _ask_for_continue_change_password(e, hint): return
                 continue
 
         # 更新密碼與清理
@@ -1761,7 +1776,7 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()
         self.text_edit.blockSignals(False)
         self.text_edit.document().blockSignals(False)
-    
+
     def action_disable_highlight(self):
         """ 禁用highlighter """
         if self.highlighter is None: return
