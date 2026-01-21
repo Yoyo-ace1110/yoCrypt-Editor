@@ -1539,8 +1539,9 @@ class MainWindow(QMainWindow):
         """ 更改主密碼 """
         if not self._ensure_password(): return
         if not self._dirty_warning_success(): return
+        new_password_bytearray = None
         # 內部函數
-        def _ask_for_continue_change_password(e: Exception, hint: str) -> bool:
+        def _ask_for_continue_change_password(hint: str) -> bool:
             """ 詢問使用者是否繼續更改主密碼 """
             reply = QMessageBox.question(
                 self,
@@ -1551,9 +1552,6 @@ class MainWindow(QMainWindow):
             )
             if reply == QMessageBox.StandardButton.No: # 停止整個更改流程
                 QMessageBox.information(self, "取消", "主密碼更改已取消")
-                # 錯誤發生時 也確保所有密碼被清除
-                secure_clear(new_password_bytearray)
-                del new_password_bytearray
                 return True
             return False
 
@@ -1610,7 +1608,7 @@ class MainWindow(QMainWindow):
             if not dialog.exec(): return # cancel
             confirm_password_str = dialog.textValue()
             _clear_dialog_input(dialog) # 清除 UI 輸入
-            confirm_password_bytearray = bytearray(new_password_str, encoding)
+            confirm_password_bytearray = bytearray(confirm_password_str, encoding)
 
             del new_password_str, confirm_password_str
             
@@ -1628,6 +1626,8 @@ class MainWindow(QMainWindow):
         del confirm_password_bytearray
         
         decrypted_contents: dict[str, str] = {}
+        error_occurred = False
+
         # 嘗試解密 Files 內所有 txt 檔案
         for fname in os.listdir(os.path.join(filedirname, "Files")):
             # 略過非 txt 跟 password
@@ -1642,10 +1642,11 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 # 問使用者是否繼續
                 hint = f"檔案 {fpath} 解密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fpath} 將無法讀取"
-                if _ask_for_continue_change_password(e, hint): return
+                if _ask_for_continue_change_password(hint): 
+                    error_occurred = True
+                    break
 
         # 嘗試加密儲存
-        error_occurred = False
         if not decrypted_contents: return
         for fpath, decrypted_text in decrypted_contents.items():
             try: 
@@ -1654,7 +1655,7 @@ class MainWindow(QMainWindow):
                     f.write(new_encrypted)
             except Exception as e:
                 hint = f"檔案 {fpath} 重新加密失敗: {e}\n是否繼續更新剩下的檔案? \n注意: 更新後 {fpath} 將無法讀取"
-                if _ask_for_continue_change_password(e, hint): 
+                if _ask_for_continue_change_password(hint): 
                     error_occurred = True
                     break
         
@@ -1674,7 +1675,12 @@ class MainWindow(QMainWindow):
         # 清除明文
         decrypted_text = ""
         decrypted_contents.clear()
-        del decrypted_contents
+        del decrypted_contents, decrypted_text
+        if error_occurred: 
+            # 錯誤發生時 也確保所有密碼被清除
+            secure_clear(new_password_bytearray)
+            del new_password_bytearray
+            return
 
         # 更新密碼與清理
         self._clear_master_password() 
