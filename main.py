@@ -1,10 +1,10 @@
-# Copyright (C) 2026 Yoyo-ace1110
+# Copyright 2026 (C) Yoyo-ace1110 Corporation. All rights reserved.
 from PySide6.QtGui import QHideEvent
 import sys, os, qdarktheme 
 from enum import Enum
 from abc import abstractmethod, ABCMeta
 from PySide6.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
-from PySide6.QtCore import QTimer, Qt, QRegularExpression
+from PySide6.QtCore import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PySide6.QtGui import * # pyright: ignore[reportWildcardImportFromLibrary]
 from yoCryptCpp import * # pyright: ignore[reportWildcardImportFromLibrary]
 from yotools200.utils import resource_path, Code_Timer
@@ -999,6 +999,33 @@ class CodeEditor(QPlainTextEdit):
             "【": "】", "〖": "〗", 
             "「": "」", "『": "』", 
         }
+        self.cursor_move_left = QTextCursor.MoveOperation.Left
+        self.cursor_move_right = QTextCursor.MoveOperation.Right
+        self.cursor_movemode_move = QTextCursor.MoveMode.MoveAnchor
+        self.cursor_movemode_keep = QTextCursor.MoveMode.KeepAnchor
+
+    def _handle_left_bracket(self, cursor: QTextCursor, left_char: str):
+        """ 處理左括號 """
+        self.insertPlainText(self.brackets[left_char])
+        cursor.movePosition(self.cursor_move_left, self.cursor_movemode_move, 1)
+
+    def _handle_right_bracket(self, cursor: QTextCursor):
+        """ 處理右括號 回傳是否插入該字元 """
+        cursor.clearSelection()
+        # 左右檢查
+        cursor.movePosition(self.cursor_move_left, self.cursor_movemode_keep, 1)
+        left_char = cursor.selectedText()
+        cursor.movePosition(self.cursor_move_right, self.cursor_movemode_keep, 2)
+        right_char = cursor.selectedText()
+        cursor.clearSelection()
+        # 避免多餘的右括號
+        insert_char = True
+        if (left_char in self.brackets.keys()):
+            if (right_char == self.brackets[left_char]):
+                cursor.movePosition(self.cursor_move_right, self.cursor_movemode_move, 1)
+                insert_char = False
+        self.setTextCursor(cursor)
+        return insert_char
     
     def set_tab(self, replace: str = "  ") -> None:
         """ 設定輸入tab時插入的字元 """
@@ -1008,6 +1035,7 @@ class CodeEditor(QPlainTextEdit):
         """ 特殊按鍵 """
         if e is None: return
         cursor = self.textCursor()
+        set_cursor = False
         # 處理tab
         if e.key() == Qt.Key.Key_Tab:
             self.insertPlainText(self.tab)
@@ -1017,36 +1045,54 @@ class CodeEditor(QPlainTextEdit):
             if cursor.position() == 0:
                 return super().keyPressEvent(e)
             # 檢查前一個
-            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor, 1)
+            cursor.movePosition(self.cursor_move_left, self.cursor_movemode_keep, 1)
             left_char = cursor.selectedText()
             # 不是括號
             if not (left_char in self.brackets):
                 return super().keyPressEvent(e)
             # 是括號
-            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.MoveAnchor, 1)
-            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1)
+            cursor.movePosition(self.cursor_move_right, self.cursor_movemode_move, 1)
+            cursor.movePosition(self.cursor_move_right, self.cursor_movemode_keep, 1)
             right_char = cursor.selectedText()
             # 去除右括號
             if (self.brackets[left_char] == right_char):
                 cursor.removeSelectedText()
             super().keyPressEvent(e)
+            set_cursor = True
+        # 處理左括號
+        elif e.text() in self.brackets.keys():
+            super().keyPressEvent(e)
+            self._handle_left_bracket(cursor, e.text())
+            set_cursor = True
+        # 處理右括號
+        elif e.text() in self.brackets.values():
+            if self._handle_right_bracket(cursor):
+                super().keyPressEvent(e)
+                set_cursor = True
         else: super().keyPressEvent(e)
+        # 套用 cursor
+        if set_cursor: self.setTextCursor(cursor)
 
     def inputMethodEvent(self, a0: QInputMethodEvent | None) -> None:
         """ 一般輸入 """
         if a0 is None: return
-        commit_text = a0.commitString()
-
-        if commit_text in self.brackets:
-            # 原本的輸入動作
+        text = a0.commitString()
+        cursor = self.textCursor()
+        set_cursor = False
+        # 處理左括號
+        if text in self.brackets.keys():
+            # 自動補全
             super().inputMethodEvent(a0)
-            # 補全
-            self.insertPlainText(self.brackets[commit_text])
-            # 退一格
-            cursor = self.textCursor()
-            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, 1)
-            self.setTextCursor(cursor)
+            self._handle_left_bracket(cursor, text)
+            set_cursor = True
+        # 處理右括號
+        elif text in self.brackets.values():
+            if self._handle_right_bracket(cursor):
+                super().inputMethodEvent(a0)
+                set_cursor = True
         else: super().inputMethodEvent(a0)
+        # 套用 cursor
+        if set_cursor: self.setTextCursor(cursor)
 
 # 主視窗
 class MainWindow(QMainWindow):
@@ -1066,35 +1112,43 @@ class MainWindow(QMainWindow):
         self.is_finding: bool = False
         self.is_replacing: bool = False
         # 初始化介面
-        self.init_Tab()
         self.init_ui()
         self._set_theme()
         self.tab.reset_zoom()
         self.focus_text_edit()
+        self.action_disable_line_wrap() # 這不是bug
+        self.action_enable_line_wrap()  # 這不是bug
         # 支援直接開啟檔案
         if not self._handle_external_file(file_to_open if file_to_open else welcome_file):
             self._handle_external_file(welcome_file)
 
-    def init_Tab(self):
-        """ 初始化self.Tab_list(含text_edit) """
+    def init_Tab_list(self):
+        """ 初始化 self.tab_list(含text_edit) """
         text_edit = CodeEditor(self) # 文字框建立
-        temp_Tab = Tab(self, index=self.tab_index, text_edit=text_edit, file_path=None, is_dirty=False, is_crypt=False)
+        temp_Tab = Tab(
+            self, 
+            index=self.tab_index, 
+            text_edit=text_edit, 
+            file_path=None, 
+            is_dirty=False, 
+            is_crypt=False
+        )
         self.tab_list: list[Tab] = [temp_Tab]
 
-    def init_ui(self):
-        # 設定 menuBar
-        menubar = self.menuBar()
-        if menubar is None: raise TypeError("menubar is None")
-
+    def init_menubar(self):
+        """ 初始化 self.menubar """
+        self.menubar = self.menuBar()
+        if self.menubar is None: raise TypeError("menubar is None")
         # 在 menubar 中加入欄位
-        file_menu = menubar.addMenu("File")
-        edit_menu = menubar.addMenu("Edit")
-        view_menu = menubar.addMenu("View")
-        if file_menu is None: raise TypeError("file_menu is None")
-        if edit_menu is None: raise TypeError("edit_menu is None")
-        if view_menu is None: raise TypeError("view_menu is None")
+        self.file_menu = self.menubar.addMenu("File")
+        self.edit_menu = self.menubar.addMenu("Edit")
+        self.view_menu = self.menubar.addMenu("View")
+        if self.file_menu is None: raise TypeError("file_menu is None")
+        if self.edit_menu is None: raise TypeError("edit_menu is None")
+        if self.view_menu is None: raise TypeError("view_menu is None")
 
-        # 輸入框/提示(setStatusBar)
+    def init_QTabWidget(self):
+        """ 初始化 self.tabs """
         self.tabs = QTabWidget()                                # 分頁欄建立
         self.tabs.setTabsClosable(True)                         # 可以關閉
         self.tabs.addTab(self.text_edit, "")                    # 加入第一個分頁
@@ -1102,8 +1156,9 @@ class MainWindow(QMainWindow):
         self.tabs.currentChanged.connect(self._handle_tab_change)   # 切換分頁事件
         self.tabs.tabCloseRequested.connect(self._handle_tab_close) # 關閉分頁事件
         self.tabs.setMovable(True)                                  # 可以拖曳
-        
-        # 尋找/取代 layout
+
+    def init_FR_dock(self):
+        """ 初始化 find && replace 相關設定 """
         self.FR_dock = QDockWidget("尋找/取代", self)  # 浮動視窗
         self.FR_dock.setObjectName("FindReplaceDock") # 設定名稱
         
@@ -1111,11 +1166,11 @@ class MainWindow(QMainWindow):
         self.replace_bar = ReplaceBar(self) # 取代工具
         self.FR_switcher = QWidget()  # (尋找/取代)widget
 
-        switcher_layout = QHBoxLayout(self.FR_switcher) # 水平布局
-        switcher_layout.setContentsMargins(0, 0, 0, 0)  # 消除留白
-        switcher_layout.addStretch(1)                   # 向右推
-        switcher_layout.addWidget(self.find_bar)        # 加入find
-        switcher_layout.addWidget(self.replace_bar)     # 加入replace
+        self.switcher_layout = QHBoxLayout(self.FR_switcher) # 水平布局
+        self.switcher_layout.setContentsMargins(0, 0, 0, 0)  # 消除留白
+        self.switcher_layout.addStretch(1)                   # 向右推
+        self.switcher_layout.addWidget(self.find_bar)        # 加入find
+        self.switcher_layout.addWidget(self.replace_bar)     # 加入replace
 
         self.find_bar.hide()    # 預設隱藏
         self.replace_bar.hide() # 預設隱藏
@@ -1131,6 +1186,200 @@ class MainWindow(QMainWindow):
         self.FR_switcher.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.FR_dock.setFloating(True) # 預設浮動
         self.FR_dock.hide()            # 隱藏
+
+    def _add_action_to_menu(
+        self, 
+        action_name: str, 
+        label: str, 
+        slot: object, 
+        shortcut: QKeySequence|QKeyCombination|QKeySequence.StandardKey|str|int|None, 
+        menu: QMenu
+    ) -> QAction: 
+        """ 將指定QAction加入指定的Qmenu(可設立捷徑) """
+        action = QAction(label, self)
+        # new_action = QAction("New", self)
+        setattr(self, action_name, action)
+        # new_action.triggered.connect(self.action_new)
+        action.triggered.connect(slot)
+        # new_action.setShortcut("Ctrl+T")
+        if shortcut is not None: action.setShortcut(shortcut)
+        # self.file_menu.addAction(new_action)
+        menu.addAction(action)
+        return action
+
+    def init_ui(self):
+        """ 初始化ui """
+        self.init_Tab_list()
+        self.init_menubar()
+        self.init_QTabWidget()
+        self.init_FR_dock()
+
+        # 主要layout (Tabs)
+        self.setCentralWidget(self.tabs)
+        self.setStatusBar(QStatusBar())
+
+        # Signal & Slot
+        self._add_action_to_menu(
+            "change_password_action", 
+            "Change Master Password", 
+            self.change_master_password, 
+            None, 
+            self.file_menu
+        )
+        self.file_menu.addSeparator()
+        self._add_action_to_menu(
+            "new_action", 
+            "New", 
+            self.action_new, 
+            "Ctrl+T", 
+            self.file_menu
+        )
+        self._add_action_to_menu(
+            "open_action", 
+            "Open", 
+            self.action_open, 
+            "Ctrl+O", 
+            self.file_menu
+        )
+        self._add_action_to_menu(
+            "open_crypted_action", 
+            "Open Crypted", 
+            self.action_open_crypted, 
+            "Ctrl+Shift+O", 
+            self.file_menu
+        )
+        self.file_menu.addSeparator()
+        self._add_action_to_menu(
+            "save_action", 
+            "Save", 
+            self.action_save, 
+            None, 
+            self.file_menu
+        )
+        self._add_action_to_menu(
+            "save_crypted_action", 
+            "Save Crypted", 
+            self.action_save_crypted, 
+            None, 
+            self.file_menu
+        )
+        self._add_action_to_menu(
+            "save_as_action", 
+            "Save as", 
+            self.action_save_as, 
+            None, 
+            self.file_menu
+        )
+        self._add_action_to_menu(
+            "save_as_crypted_action", 
+            "Save as Crypted", 
+            self.action_save_as_crypted, 
+            None, 
+            self.file_menu
+        )
+        self._add_action_to_menu(
+            "auto_save_action", 
+            "Auto Save", 
+            self.action_auto_save, 
+            "Ctrl+S", 
+            self.file_menu
+        )
+        self.file_menu.addSeparator()
+        self._add_action_to_menu(
+            "close_tab_action", 
+            "Close Current Tab", 
+            self.action_close_tab, 
+            "Ctrl+W", 
+            self.file_menu
+        )
+
+        self._add_action_to_menu(
+            "find_action", 
+            "Find", 
+            self.action_find, 
+            "Ctrl+F", 
+            self.edit_menu
+        )
+        self._add_action_to_menu(
+            "replace_action", 
+            "Replace", 
+            self.action_replace, 
+            "Ctrl+H", 
+            self.edit_menu
+        )
+
+        auto_highlight_action = QAction("Auto Highlight", self)                # 自動判斷檔案類型並高亮
+        disable_highlight_action = QAction("Disable Highlight", self)          # 不要高亮
+        highlight_as_python_action = QAction("Highlight as Python", self)      # 視為python高亮
+        highlight_as_markdown_action = QAction("Highlight as Markdown", self)  # 視為Markdown高亮
+        
+        zoom_in_action = QAction("Zoom In", self)                 # 字體放大
+        zoom_out_action = QAction("Zoom Out", self)               # 字體縮小
+        reset_zoom_action = QAction("Reset Zoom", self)           # 還原預設字體大小
+
+        set_theme_dark_action = QAction("Toggle To Dark Theme", self)       # 深色模式
+        set_theme_light_action = QAction("Toggle To Light Theme", self)     # 淺色模式
+        set_theme_origin_action = QAction("Toggle To Original Theme", self) # 作業系統原生視窗
+        
+        enable_line_wrap_action = QAction("Enable Word Wrap", self)
+        disable_line_wrap_action = QAction("Disable Word Wrap", self)
+
+        # 連接事件
+        auto_highlight_action.triggered.connect(self.action_auto_highlight)
+        disable_highlight_action.triggered.connect(self.action_disable_highlight)
+        highlight_as_python_action.triggered.connect(self.action_highlight_as_python)
+        highlight_as_markdown_action.triggered.connect(self.action_highlight_as_markdown)
+        
+        zoom_in_action.triggered.connect(self.action_zoom_in)
+        zoom_out_action.triggered.connect(self.action_zoom_out)
+        reset_zoom_action.triggered.connect(self.action_zoom_reset)
+
+        set_theme_dark_action.triggered.connect(self.action_set_theme_dark)
+        set_theme_light_action.triggered.connect(self.action_set_theme_light)
+        set_theme_origin_action.triggered.connect(self.action_set_theme_origin)
+        
+        enable_line_wrap_action.triggered.connect(self.action_enable_line_wrap)
+        disable_line_wrap_action.triggered.connect(self.action_disable_line_wrap)
+
+        # 快捷鍵
+        zoom_in_action.setShortcuts([
+            QKeySequence("Ctrl+Shift+="), 
+            QKeySequence("Ctrl+Plus"), 
+            QKeySequence("Ctrl+KeypadPlus")
+        ])
+        zoom_in_action.setShortcut("Ctrl++")
+        zoom_out_action.setShortcut("Ctrl+-")
+        reset_zoom_action.setShortcut("Ctrl+0")
+
+        # 新增 action 至 menubar
+        self.edit_menu.addSeparator()
+        self.edit_menu.addAction(auto_highlight_action)
+        self.edit_menu.addAction(disable_highlight_action)
+        self.edit_menu.addAction(highlight_as_python_action)
+        self.edit_menu.addAction(highlight_as_markdown_action)
+
+        self.view_menu.addAction(set_theme_dark_action)
+        self.view_menu.addAction(set_theme_light_action)
+        self.view_menu.addAction(set_theme_origin_action)
+        self.view_menu.addSeparator()
+        self.view_menu.addAction(zoom_in_action)
+        self.view_menu.addAction(zoom_out_action)
+        self.view_menu.addAction(reset_zoom_action)
+        self.view_menu.addSeparator()
+        self.view_menu.addAction(enable_line_wrap_action)
+        self.view_menu.addAction(disable_line_wrap_action)
+        
+        # 特殊快捷鍵
+        self.next_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
+        self.next_tab_shortcut.activated.connect(self.switch_next_tab)
+    
+    '''
+    def init_ui(self):
+        """ 初始化ui """
+        self.init_Tab_list()
+        self.init_menubar()
+        self.init_QTabWidget()
+        self.init_FR_dock()
 
         # 主要layout (Tabs)
         self.setCentralWidget(self.tabs)
@@ -1165,6 +1414,9 @@ class MainWindow(QMainWindow):
         disable_highlight_action = QAction("Disable Highlight", self)          # 不要高亮
         highlight_as_python_action = QAction("Highlight as Python", self)      # 視為python高亮
         highlight_as_markdown_action = QAction("Highlight as Markdown", self)  # 視為Markdown高亮
+        
+        enable_line_wrap_action = QAction("Enable Word Wrap", self)
+        disable_line_wrap_action = QAction("Disable Word Wrap", self)
 
         # 連接事件
         change_password_action.triggered.connect(self.change_master_password)
@@ -1196,6 +1448,9 @@ class MainWindow(QMainWindow):
         highlight_as_python_action.triggered.connect(self.action_highlight_as_python)
         highlight_as_markdown_action.triggered.connect(self.action_highlight_as_markdown)
 
+        enable_line_wrap_action.triggered.connect(self.action_enable_line_wrap)
+        disable_line_wrap_action.triggered.connect(self.action_disable_line_wrap)
+
         # 快捷鍵
         new_action.setShortcut("Ctrl+T")
         open_action.setShortcut("Ctrl+Shift+O")
@@ -1217,39 +1472,43 @@ class MainWindow(QMainWindow):
         close_tab_action.setShortcut("Ctrl+W")
 
         # 新增 action 至 menubar
-        file_menu.addAction(change_password_action)
-        file_menu.addSeparator()
-        file_menu.addAction(new_action)
-        file_menu.addAction(open_action)
-        file_menu.addAction(open_crypted_action)
-        file_menu.addSeparator()
-        file_menu.addAction(auto_save_action)
-        file_menu.addAction(save_action)
-        file_menu.addAction(save_crypted_action)
-        file_menu.addAction(save_as_action)
-        file_menu.addAction(save_as_crypted_action)
-        file_menu.addSeparator()
-        file_menu.addAction(close_tab_action)
+        self.file_menu.addAction(change_password_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(new_action)
+        self.file_menu.addAction(open_action)
+        self.file_menu.addAction(open_crypted_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(auto_save_action)
+        self.file_menu.addAction(save_action)
+        self.file_menu.addAction(save_crypted_action)
+        self.file_menu.addAction(save_as_action)
+        self.file_menu.addAction(save_as_crypted_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(close_tab_action)
 
-        edit_menu.addAction(find_action)
-        edit_menu.addAction(replace_action)
-        edit_menu.addSeparator()
-        edit_menu.addAction(auto_highlight_action)
-        edit_menu.addAction(disable_highlight_action)
-        edit_menu.addAction(highlight_as_python_action)
-        edit_menu.addAction(highlight_as_markdown_action)
+        self.edit_menu.addAction(find_action)
+        self.edit_menu.addAction(replace_action)
+        self.edit_menu.addSeparator()
+        self.edit_menu.addAction(auto_highlight_action)
+        self.edit_menu.addAction(disable_highlight_action)
+        self.edit_menu.addAction(highlight_as_python_action)
+        self.edit_menu.addAction(highlight_as_markdown_action)
 
-        view_menu.addAction(zoom_in_action)
-        view_menu.addAction(zoom_out_action)
-        view_menu.addAction(reset_zoom_action)
-        view_menu.addSeparator()
-        view_menu.addAction(set_theme_dark_action)
-        view_menu.addAction(set_theme_light_action)
-        view_menu.addAction(set_theme_origin_action)
+        self.view_menu.addAction(set_theme_dark_action)
+        self.view_menu.addAction(set_theme_light_action)
+        self.view_menu.addAction(set_theme_origin_action)
+        self.view_menu.addSeparator()
+        self.view_menu.addAction(zoom_in_action)
+        self.view_menu.addAction(zoom_out_action)
+        self.view_menu.addAction(reset_zoom_action)
+        self.view_menu.addSeparator()
+        self.view_menu.addAction(enable_line_wrap_action)
+        self.view_menu.addAction(disable_line_wrap_action)
         
         # 特殊快捷鍵
         self.next_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
         self.next_tab_shortcut.activated.connect(self.switch_next_tab)
+    '''
 
     @property
     def tab(self) -> Tab:
@@ -1846,6 +2105,22 @@ class MainWindow(QMainWindow):
         self.tabs.setCurrentIndex(next_index)
         self._handle_tab_change(next_index)
 
+    def action_enable_line_wrap(self):
+        """ 啟用自動換行 """
+        option = self.text_edit.document().defaultTextOption()
+        # 自動換行模式: 不切斷單字
+        option.setWrapMode(QTextOption.WrapMode.WordWrap)
+        self.text_edit.document().setDefaultTextOption(option)
+        self.text_edit.setLineWrapMode(self.text_edit.LineWrapMode.WidgetWidth)
+
+    def action_disable_line_wrap(self):
+        """ 停用自動換行 """
+        option = self.text_edit.document().defaultTextOption()
+        # 自動換行模式: 停用
+        option.setWrapMode(QTextOption.WrapMode.NoWrap)
+        self.text_edit.document().setDefaultTextOption(option)
+        self.text_edit.setLineWrapMode(self.text_edit.LineWrapMode.NoWrap)
+
     def closeEvent(self, a0):
         """ 關閉時的動作 """
         if a0 is None: raise ValueError("in closeEvent: a0 is None")
@@ -1872,7 +2147,8 @@ if __name__ == "__main__":
     sys.exit(app.exec())
 
 # --- TODO: ---
-# line_wrap_mode/clear_clipboard_on_exit/sucure_timeout/show_line_numbers
+# line_wrap_mode/clear_clipboard_on_exit/sucure_timeout
+# show_line_numbers/code_editor 避免())
 # setting: 
 # color/color_theme/verify_password_first
 # default_font_size/default_highlighter
@@ -1882,3 +2158,4 @@ if __name__ == "__main__":
 # 區分同名檔案(標籤顯示完整路徑)
 
 # --- FIXME: --- 
+# add_action_to_menu
