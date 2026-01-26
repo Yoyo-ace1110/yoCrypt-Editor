@@ -1377,7 +1377,7 @@ class MainWindow(QMainWindow):
             "zoom_in_action", 
             "Zoom In", 
             self.action_zoom_in, 
-            "Ctrl++", 
+            None, 
             self.view_menu
         )
         self._add_action_to_menu(
@@ -1412,9 +1412,8 @@ class MainWindow(QMainWindow):
 
         # 特殊快捷鍵
         self.zoom_in_action.setShortcuts([
-            QKeySequence("Ctrl+Shift+="), 
-            QKeySequence("Ctrl+Plus"), 
-            QKeySequence("Ctrl+KeypadPlus")
+            QKeySequence(int(Qt.Modifier.CTRL.value)|int(Qt.Key.Key_Plus.value)), 
+            QKeySequence("Ctrl+=")
         ])
         self.next_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
         self.next_tab_shortcut.activated.connect(self.switch_next_tab)
