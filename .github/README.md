@@ -11,7 +11,7 @@
 ## 🎨 Screenshots
 
 <p align="center">
-  <img src="./docs/assets/main_ui.png" alt="yoCrypt-Editor Main UI">
+  <img src="./assets/main_ui.png" alt="yoCrypt-Editor Main UI">
 </p>
 
 ---
