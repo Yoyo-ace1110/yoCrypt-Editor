@@ -27,7 +27,7 @@
 ### 🎨 Screenshot
 
 <p align="left">
-  <img src="assets/main_ui.png" alt="yoCrypt-Editor Main UI" width="90%">
+  <img src="./assets/main_ui.png" alt="yoCrypt-Editor Main UI" width="90%">
 </p>
 
 ---
