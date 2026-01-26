@@ -37,3 +37,4 @@ backspace可以同時刪除一組的連續括號(bracket)
 加入是否啟用字動換行選項
 增加初始化部分程式碼的可維護性
 模組化init_ui函數
+switch open and open crypted shortcut
