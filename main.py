@@ -1,7 +1,8 @@
 # Copyright 2026 (C) Yoyo-ace1110 Corporation. All rights reserved.
-from PySide6.QtGui import QHideEvent
 import sys, os, qdarktheme 
+import collections.abc
 from enum import Enum
+from typing import Union, Sequence
 from abc import abstractmethod, ABCMeta
 from PySide6.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
 from PySide6.QtCore import * # pyright: ignore[reportWildcardImportFromLibrary]
@@ -16,6 +17,14 @@ welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
 default_font_size = 3
 window: "MainWindow"
+ShortcutType = Union[
+    QKeySequence, 
+    QKeyCombination, 
+    QKeySequence.StandardKey, 
+    str, 
+    int, 
+    Sequence[QKeySequence]
+]
 
 # 函數
 def _clear_dialog_input(dialog: QDialog):
@@ -1192,7 +1201,7 @@ class MainWindow(QMainWindow):
         action_name: str, 
         label: str, 
         slot: object, 
-        shortcut: QKeySequence|QKeyCombination|QKeySequence.StandardKey|str|int|None, 
+        shortcut: ShortcutType|None, 
         menu: QMenu
     ) -> QAction: 
         """ 將指定QAction加入指定的Qmenu(可設立捷徑) """
@@ -1202,23 +1211,26 @@ class MainWindow(QMainWindow):
         # new_action.triggered.connect(self.action_new)
         action.triggered.connect(slot)
         # new_action.setShortcut("Ctrl+T")
-        if shortcut is not None: action.setShortcut(shortcut)
+        if shortcut is not None: 
+            if isinstance(shortcut, collections.abc.Sequence) and not isinstance(shortcut, (str, QKeySequence)):
+                action.setShortcuts(shortcut)
+            else: action.setShortcut(shortcut)
         # self.file_menu.addAction(new_action)
         menu.addAction(action)
         return action
 
     def init_ui(self):
         """ 初始化ui """
+        self.zoom_in_action: QAction
         self.init_Tab_list()
         self.init_menubar()
         self.init_QTabWidget()
         self.init_FR_dock()
-
-        # 主要layout (Tabs)
         self.setCentralWidget(self.tabs)
         self.setStatusBar(QStatusBar())
 
-        # Signal & Slot
+        # --- Signal & Slot ---
+        # file_menu
         self._add_action_to_menu(
             "change_password_action", 
             "Change Master Password", 
@@ -1292,7 +1304,8 @@ class MainWindow(QMainWindow):
             "Ctrl+W", 
             self.file_menu
         )
-
+        
+        # edit_menu
         self._add_action_to_menu(
             "find_action", 
             "Find", 
@@ -1307,72 +1320,104 @@ class MainWindow(QMainWindow):
             "Ctrl+H", 
             self.edit_menu
         )
+        self.edit_menu.addSeparator()
+        self._add_action_to_menu(
+            "auto_highlight_action", 
+            "Auto Highlight", 
+            self.action_auto_highlight, 
+            None, 
+            self.edit_menu
+        )
+        self._add_action_to_menu(
+            "disable_highlight_action", 
+            "Disable Highlight", 
+            self.action_disable_highlight, 
+            None, 
+            self.edit_menu
+        )
+        self._add_action_to_menu(
+            "highlight_as_python_action", 
+            "Highlight as Python", 
+            self.action_highlight_as_python, 
+            None, 
+            self.edit_menu
+        )
+        self._add_action_to_menu(
+            "highlight_as_markdown_action", 
+            "Highlight as Markdown", 
+            self.action_highlight_as_markdown, 
+            "Ctrl+H", 
+            self.edit_menu
+        )
 
-        auto_highlight_action = QAction("Auto Highlight", self)                # 自動判斷檔案類型並高亮
-        disable_highlight_action = QAction("Disable Highlight", self)          # 不要高亮
-        highlight_as_python_action = QAction("Highlight as Python", self)      # 視為python高亮
-        highlight_as_markdown_action = QAction("Highlight as Markdown", self)  # 視為Markdown高亮
-        
-        zoom_in_action = QAction("Zoom In", self)                 # 字體放大
-        zoom_out_action = QAction("Zoom Out", self)               # 字體縮小
-        reset_zoom_action = QAction("Reset Zoom", self)           # 還原預設字體大小
+        # view_menu
+        self._add_action_to_menu(
+            "set_theme_dark_action", 
+            "Toggle To Dark Theme", 
+            self.action_set_theme_dark, 
+            None, 
+            self.view_menu
+        )
+        self._add_action_to_menu(
+            "set_theme_light_action", 
+            "Toggle To Light Theme", 
+            self.action_set_theme_light, 
+            None, 
+            self.view_menu
+        )
+        self._add_action_to_menu(
+            "set_theme_origin_action", 
+            "Toggle To Original Theme", 
+            self.action_set_theme_origin, 
+            None, 
+            self.view_menu
+        )
+        self.view_menu.addSeparator()
+        self._add_action_to_menu(
+            "zoom_in_action", 
+            "Zoom In", 
+            self.action_zoom_in, 
+            "Ctrl++", 
+            self.view_menu
+        )
+        self._add_action_to_menu(
+            "zoom_out_action", 
+            "Zoom Out", 
+            self.action_zoom_out, 
+            "Ctrl+-", 
+            self.view_menu
+        )
+        self._add_action_to_menu(
+            "reset_zoom_action", 
+            "Reset Zoom", 
+            self.action_reset_zoom, 
+            None, 
+            self.view_menu
+        )
+        self.view_menu.addSeparator()
+        self._add_action_to_menu(
+            "enable_line_wrap_action", 
+            "Enable Word Wrap", 
+            self.action_enable_line_wrap, 
+            None, 
+            self.view_menu
+        )
+        self._add_action_to_menu(
+            "disable_line_wrap_action", 
+            "Disable Word Wrap", 
+            self.action_disable_line_wrap, 
+            None, 
+            self.view_menu
+        )
 
-        set_theme_dark_action = QAction("Toggle To Dark Theme", self)       # 深色模式
-        set_theme_light_action = QAction("Toggle To Light Theme", self)     # 淺色模式
-        set_theme_origin_action = QAction("Toggle To Original Theme", self) # 作業系統原生視窗
-        
-        enable_line_wrap_action = QAction("Enable Word Wrap", self)
-        disable_line_wrap_action = QAction("Disable Word Wrap", self)
-
-        # 連接事件
-        auto_highlight_action.triggered.connect(self.action_auto_highlight)
-        disable_highlight_action.triggered.connect(self.action_disable_highlight)
-        highlight_as_python_action.triggered.connect(self.action_highlight_as_python)
-        highlight_as_markdown_action.triggered.connect(self.action_highlight_as_markdown)
-        
-        zoom_in_action.triggered.connect(self.action_zoom_in)
-        zoom_out_action.triggered.connect(self.action_zoom_out)
-        reset_zoom_action.triggered.connect(self.action_zoom_reset)
-
-        set_theme_dark_action.triggered.connect(self.action_set_theme_dark)
-        set_theme_light_action.triggered.connect(self.action_set_theme_light)
-        set_theme_origin_action.triggered.connect(self.action_set_theme_origin)
-        
-        enable_line_wrap_action.triggered.connect(self.action_enable_line_wrap)
-        disable_line_wrap_action.triggered.connect(self.action_disable_line_wrap)
-
-        # 快捷鍵
-        zoom_in_action.setShortcuts([
+        # 特殊快捷鍵
+        self.zoom_in_action.setShortcuts([
             QKeySequence("Ctrl+Shift+="), 
             QKeySequence("Ctrl+Plus"), 
             QKeySequence("Ctrl+KeypadPlus")
         ])
-        zoom_in_action.setShortcut("Ctrl++")
-        zoom_out_action.setShortcut("Ctrl+-")
-        reset_zoom_action.setShortcut("Ctrl+0")
-
-        # 新增 action 至 menubar
-        self.edit_menu.addSeparator()
-        self.edit_menu.addAction(auto_highlight_action)
-        self.edit_menu.addAction(disable_highlight_action)
-        self.edit_menu.addAction(highlight_as_python_action)
-        self.edit_menu.addAction(highlight_as_markdown_action)
-
-        self.view_menu.addAction(set_theme_dark_action)
-        self.view_menu.addAction(set_theme_light_action)
-        self.view_menu.addAction(set_theme_origin_action)
-        self.view_menu.addSeparator()
-        self.view_menu.addAction(zoom_in_action)
-        self.view_menu.addAction(zoom_out_action)
-        self.view_menu.addAction(reset_zoom_action)
-        self.view_menu.addSeparator()
-        self.view_menu.addAction(enable_line_wrap_action)
-        self.view_menu.addAction(disable_line_wrap_action)
-        
-        # 特殊快捷鍵
         self.next_tab_shortcut = QShortcut(QKeySequence("Ctrl+Tab"), self)
         self.next_tab_shortcut.activated.connect(self.switch_next_tab)
-    
     '''
     def init_ui(self):
         """ 初始化ui """
@@ -1958,7 +2003,7 @@ class MainWindow(QMainWindow):
         """ 字體縮小 """
         self.text_edit.zoomOut(1)
     
-    def action_zoom_reset(self):
+    def action_reset_zoom(self):
         """ 還原預設字體大小 """
         self.tab.reset_zoom()
 
