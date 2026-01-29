@@ -1,9 +1,11 @@
 # Copyright (C) 2026 Yoyo-ace1110
 import base64, os
-openssl_bin = r"C:\Program Files\OpenSSL-Win64\bin"
-mingw_bin = r"C:\MinGW\winlibs-x86_64-posix-seh-gcc-15.1.0-mingw-w64ucrt-12.0.0-r1\mingw64\bin"
-if os.path.exists(openssl_bin): os.add_dll_directory(openssl_bin)
-if os.path.exists(mingw_bin): os.add_dll_directory(mingw_bin)
+current_path = os.path.dirname(os.path.abspath(__file__))
+mingw_bin = os.path.join(current_path, r"dll")
+if os.path.exists(mingw_bin):
+    os.add_dll_directory(os.path.abspath(mingw_bin))
+else:
+    print(f"[Env] Warning: MinGW bin not found at {mingw_bin}")
 import yoCryptCpp_pybind_module
 
 def yoCrypt_init(count: int = 360000, salt_size: int = 16, hash_len: int = 32):
