@@ -178,7 +178,7 @@ class FR_Bar(QWidget):
     def init(self, main_window: "MainWindow"):
         super().__init__(main_window)
         # 布局
-        self.main_window = main_window
+        self.main = main_window
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setSpacing(2)
         self.main_layout.setContentsMargins(8, 4, 8, 4)
@@ -265,7 +265,7 @@ class FR_Bar(QWidget):
         """ 遍歷文件計算總匹配數 """
         self.match_count = 0
         # 原始光標
-        original_cursor = self.main_window.text_edit.textCursor()
+        original_cursor = self.main.text_edit.textCursor()
 
         if self.search_range:
             # 進入範圍搜尋
@@ -273,34 +273,34 @@ class FR_Bar(QWidget):
             start_pos = range_cursor.selectionStart()
             end_pos = range_cursor.selectionEnd() 
             # 設置臨時光標從範圍起點開始
-            temp_cursor = QTextCursor(self.main_window.text_edit.document())
+            temp_cursor = QTextCursor(self.main.text_edit.document())
             temp_cursor.setPosition(start_pos)
-            self.main_window.text_edit.setTextCursor(temp_cursor)
+            self.main.text_edit.setTextCursor(temp_cursor)
             # 遍歷計數
-            while self.main_window.text_edit.find(text, flags):
-                match_cursor = self.main_window.text_edit.textCursor()
+            while self.main.text_edit.find(text, flags):
+                match_cursor = self.main.text_edit.textCursor()
                 # 匹配項超出範圍 停止計數
                 if match_cursor.selectionEnd() > end_pos: break
                 self.match_count += 1
         else:
             # 整體搜尋
-            temp_cursor = QTextCursor(self.main_window.text_edit.document())
+            temp_cursor = QTextCursor(self.main.text_edit.document())
             temp_cursor.movePosition(QTextCursor.MoveOperation.Start)
-            self.main_window.text_edit.setTextCursor(temp_cursor)
+            self.main.text_edit.setTextCursor(temp_cursor)
             # 遍歷計數
-            while self.main_window.text_edit.find(text, flags):
+            while self.main.text_edit.find(text, flags):
                 self.match_count += 1
 
         # 恢復光標位置
-        self.main_window.text_edit.setTextCursor(original_cursor)
+        self.main.text_edit.setTextCursor(original_cursor)
 
     def _find_current_index(self, text):
         """ 計算當前被選取匹配項是總數中的第幾個 """
         flags = QTextDocument.FindFlag(0)
         if self.case_sensitive: flags |= QTextDocument.FindFlag.FindCaseSensitively # 區分大小寫
-        current_selection_start = self.main_window.text_edit.textCursor().selectionStart()
-        original_cursor = self.main_window.text_edit.textCursor() 
-        temp_cursor = QTextCursor(self.main_window.text_edit.document()) # 臨時光標
+        current_selection_start = self.main.text_edit.textCursor().selectionStart()
+        original_cursor = self.main.text_edit.textCursor() 
+        temp_cursor = QTextCursor(self.main.text_edit.document()) # 臨時光標
         
         current_index = 0
         # 範圍搜尋模式
@@ -310,10 +310,10 @@ class FR_Bar(QWidget):
             start_pos = range_cursor.selectionStart()
             end_pos = range_cursor.selectionEnd()
             temp_cursor.setPosition(start_pos) 
-            self.main_window.text_edit.setTextCursor(temp_cursor)
+            self.main.text_edit.setTextCursor(temp_cursor)
             # 遍歷計數
-            while self.main_window.text_edit.find(text, flags): # pyright: ignore[reportCallIssue, reportArgumentType]
-                match_cursor = self.main_window.text_edit.textCursor()
+            while self.main.text_edit.find(text, flags): # pyright: ignore[reportCallIssue, reportArgumentType]
+                match_cursor = self.main.text_edit.textCursor()
                 # 超出範圍停止
                 if match_cursor.selectionEnd() > end_pos: break
                 current_index += 1
@@ -321,14 +321,14 @@ class FR_Bar(QWidget):
         # 整體搜尋模式
         else: 
             temp_cursor.movePosition(QTextCursor.MoveOperation.Start)
-            self.main_window.text_edit.setTextCursor(temp_cursor)
+            self.main.text_edit.setTextCursor(temp_cursor)
             # 遍歷計數
-            while self.main_window.text_edit.find(text, flags): # pyright: ignore[reportCallIssue, reportArgumentType]
+            while self.main.text_edit.find(text, flags): # pyright: ignore[reportCallIssue, reportArgumentType]
                 current_index += 1
-                if self.main_window.text_edit.textCursor().selectionStart() == current_selection_start: break
+                if self.main.text_edit.textCursor().selectionStart() == current_selection_start: break
                 
         # 恢復光標位置
-        self.main_window.text_edit.setTextCursor(original_cursor)
+        self.main.text_edit.setTextCursor(original_cursor)
         return current_index
 
     def _action_find_base(self, flags: QTextDocument.FindFlag, move_operation: QTextCursor.MoveOperation):  
@@ -340,7 +340,7 @@ class FR_Bar(QWidget):
         # 向flags方向尋找
         if self.case_sensitive: flags |= QTextDocument.FindFlag.FindCaseSensitively # type: ignore
         is_forward_search = not bool(flags & QTextDocument.FindFlag.FindBackward)
-        found = self.main_window.text_edit.find(search_text, flags)
+        found = self.main.text_edit.find(search_text, flags)
 
         # 範圍搜尋 (範圍內環繞)
         if self.search_range:
@@ -349,7 +349,7 @@ class FR_Bar(QWidget):
             end_pos = range_cursor.selectionEnd()
             # 檢查是否需要環繞
             if found:
-                match_cursor = self.main_window.text_edit.textCursor()
+                match_cursor = self.main.text_edit.textCursor()
                 # Case: 向前找超過範圍終點
                 if is_forward_search and match_cursor.selectionEnd() > end_pos:
                     found = False
@@ -358,26 +358,26 @@ class FR_Bar(QWidget):
                     found = False
             # 範圍內環繞
             if not found:
-                cursor = self.main_window.text_edit.textCursor()
+                cursor = self.main.text_edit.textCursor()
                 # 向前找/向後找
                 if is_forward_search: cursor.setPosition(start_pos)
                 else: cursor.setPosition(end_pos)
-                self.main_window.text_edit.setTextCursor(cursor)
+                self.main.text_edit.setTextCursor(cursor)
                 # 重新搜尋
-                if not self.main_window.text_edit.find(search_text, flags):
+                if not self.main.text_edit.find(search_text, flags):
                     raise RuntimeError("text !found in action_find_next but found in _update_search_results")
         # 整體環繞
         elif not found:
             # 從move_operation環繞
-            cursor = self.main_window.text_edit.textCursor()
+            cursor = self.main.text_edit.textCursor()
             cursor.movePosition(move_operation)
-            self.main_window.text_edit.setTextCursor(cursor)
+            self.main.text_edit.setTextCursor(cursor)
             # 發生 -> bug
-            if not self.main_window.text_edit.find(search_text, flags):
+            if not self.main.text_edit.find(search_text, flags):
                 raise RuntimeError("text !found in action_find_next but found in _update_search_results")
             
         # 聚焦mainwindow
-        self.main_window.focus_text_edit()
+        self.main.focus_text_edit()
         # 重新計算self.match_index
         self.match_index = self._find_current_index(search_text)
         text = f"{self.match_index}/{self.match_count}" if self.match_count else "查無結果"
@@ -386,7 +386,7 @@ class FR_Bar(QWidget):
     def update_search_results(self):
         """ 變更時計算總數 """
         search_text = self.find_input.text()
-        self.main_window.last_find_text = search_text
+        self.main.last_find_text = search_text
         if not search_text:
             self.match_count = 0
             self.find_result.setText("-/-")
@@ -416,7 +416,7 @@ class FR_Bar(QWidget):
 
     def action_find_area(self): 
         """ 設定尋找範圍 """
-        current_cursor = self.main_window.text_edit.textCursor()
+        current_cursor = self.main.text_edit.textCursor()
         if (not current_cursor.hasSelection()) or (self.search_range is not None):
             self.search_range = None
             self.area_button.setStyleSheet("")
@@ -440,7 +440,7 @@ class FR_Bar(QWidget):
         """ 取代 """
         search_text = self.find_input.text()
         replace_text = self.replace_input.text()
-        cursor = self.main_window.text_edit.textCursor()
+        cursor = self.main.text_edit.textCursor()
         # 尋找欄為空則返回
         if not search_text: return
         if not cursor.hasSelection(): 
@@ -449,11 +449,11 @@ class FR_Bar(QWidget):
         origin_pos = cursor.position()
         cursor.insertText(replace_text)
         cursor.setPosition(origin_pos+len(replace_text))
-        self.main_window.text_edit.setTextCursor(cursor)
+        self.main.text_edit.setTextCursor(cursor)
         self.action_find_next()
         # dirty
-        self.main_window.tab.is_dirty = True
-        self.main_window.tab.update_title()
+        self.main.tab.is_dirty = True
+        self.main.tab.update_title()
 
     def action_replace_all(self):
         """ 全部取代 """
@@ -462,8 +462,8 @@ class FR_Bar(QWidget):
         if not search_text: return
         flags = QTextDocument.FindFlag(0)
         if self.case_sensitive: flags |= QTextDocument.FindFlag.FindCaseSensitively
-        original_cursor = self.main_window.text_edit.textCursor()
-        temp_cursor = QTextCursor(self.main_window.text_edit.document())
+        original_cursor = self.main.text_edit.textCursor()
+        temp_cursor = QTextCursor(self.main.text_edit.document())
         
         # 範圍取代
         if self.search_range:
@@ -477,22 +477,22 @@ class FR_Bar(QWidget):
         # 迴圈遍歷
         replace_count = 0
         last_position = -1
-        self.main_window.text_edit.setTextCursor(temp_cursor)
-        while self.main_window.text_edit.find(search_text, flags):
-            match_cursor = self.main_window.text_edit.textCursor()
+        self.main.text_edit.setTextCursor(temp_cursor)
+        while self.main.text_edit.find(search_text, flags):
+            match_cursor = self.main.text_edit.textCursor()
             # 超出範圍->停止替換
             if self.search_range and match_cursor.selectionEnd() > end_pos: break 
             # 替換選取的文字
             match_cursor.insertText(replace_text)
-            self.main_window.text_edit.setTextCursor(match_cursor)
+            self.main.text_edit.setTextCursor(match_cursor)
             replace_count += 1
             last_position = match_cursor.position()
 
         # 恢復並更新
-        self.main_window.text_edit.setTextCursor(original_cursor)
+        self.main.text_edit.setTextCursor(original_cursor)
         if replace_count > 0:
             # 光標位置設定與反白
-            final_cursor = self.main_window.text_edit.textCursor()
+            final_cursor = self.main.text_edit.textCursor()
             final_cursor.setPosition(last_position)
             final_cursor.movePosition(
                 QTextCursor.MoveOperation.Left, 
@@ -500,10 +500,10 @@ class FR_Bar(QWidget):
                 len(replace_text)
             )
             final_cursor.setPosition(last_position)
-            self.main_window.text_edit.setTextCursor(final_cursor)
+            self.main.text_edit.setTextCursor(final_cursor)
             # dirty
-            self.main_window.tab.is_dirty = True
-            self.main_window.tab.update_title()
+            self.main.tab.is_dirty = True
+            self.main.tab.update_title()
             
 class FindBar(FR_Bar):
     """ Find function """
@@ -514,12 +514,12 @@ class FindBar(FR_Bar):
 
     def showEvent(self, event: QShowEvent) -> None:
         """ 顯示事件 """
-        self.main_window.is_finding = True
+        self.main.is_finding = True
         return super().showEvent(event)
 
     def hideEvent(self, event: QHideEvent) -> None:
         """ 隱藏事件 """
-        self.main_window.is_finding = False
+        self.main.is_finding = False
         return super().hideEvent(event)
 
 class ReplaceBar(FR_Bar):
@@ -532,12 +532,12 @@ class ReplaceBar(FR_Bar):
 
     def showEvent(self, event: QShowEvent) -> None:
         """ 顯示事件 """
-        self.main_window.is_replacing = True
+        self.main.is_replacing = True
         return super().showEvent(event)
 
     def hideEvent(self, event: QHideEvent) -> None:
         """ 隱藏事件 """
-        self.main_window.is_replacing = False
+        self.main.is_replacing = False
         return super().hideEvent(event)
 
 # 高亮器
