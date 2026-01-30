@@ -40,3 +40,4 @@ backspace可以同時刪除一組的連續括號(bracket)
 switch ("open" and "open crypted")'s shortcut
 no more Ctrl+0 -> reset zoom
 更正yoCryptCpp.py的路徑問題以及dll缺失問題
+加速 find && replace
