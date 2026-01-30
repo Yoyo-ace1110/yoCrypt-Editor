@@ -2066,3 +2066,5 @@ if __name__ == "__main__":
 # 區分同名檔案(標籤顯示完整路徑)
 
 # --- FIXME: --- 
+# 尋找/取代
+# text_edit和Tab不match
