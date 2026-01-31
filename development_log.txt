@@ -30,7 +30,7 @@
 # 若取消則把前面著加密重新儲存的檔案再解密復原
 # 加入test_change_master_password.py，測試四種狀態下change_master_password的表現
 
-# V2.0.6
+# V3.0.0
 修復某些輸入法沒有落實括號補全的問題
 backspace可以同時刪除一組的連續括號(bracket)
 當輸入左括號接著輸入右括號時，不會再出現重複的右括號了
