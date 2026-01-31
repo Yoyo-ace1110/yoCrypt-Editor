@@ -12,9 +12,12 @@ from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32)
 
 encoding = "utf-8"
-password_file = resource_path("../password.txt")
-welcome_file = resource_path("../Welcome.txt")
-filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+password_file = resource_path("password.txt")
+welcome_file = resource_path("Welcome.txt")
+filedirname = os.path.dirname(os.path.abspath(__file__))
+# password_file = resource_path("../password.txt")
+# welcome_file = resource_path("../Welcome.txt")
+# filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 default_font_size = 3
 window: "MainWindow"
 ShortcutType = Union[
@@ -1168,7 +1171,7 @@ class MainWindow(QMainWindow):
         self.tabs.currentChanged.connect(self._handle_tab_change)   # 切換分頁事件
         self.tabs.tabCloseRequested.connect(self._handle_tab_close) # 關閉分頁事件
         self.tabs.setMovable(True)                                  # 可以拖曳
-        # self.tabs.tabBar().tabMoved.connect(self._handel_tabMoved)
+        self.tabs.tabBar().tabMoved.connect(self._handel_tabMoved)
         
     def init_FR_dock(self):
         """ 初始化 find && replace 相關設定 """
@@ -1502,6 +1505,8 @@ class MainWindow(QMainWindow):
         moved_tab = self.tab_list.pop(from_)
         # 同步更新列表位置
         self.tab_list.insert(to, moved_tab)
+        self.tab_index = self.tabs.currentIndex()
+        moved_tab.update_title()
 
     def _dirty_warning_success(self) -> bool:
         """ 當檔案未儲存且會遺失時 詢問使用者是否要儲存(True代表不用cancel) """
