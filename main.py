@@ -113,11 +113,10 @@ class Theme(Enum):
 # 分頁
 class Tab:
     """ Information of a Tab """
-    def __init__(self, main_window: "MainWindow", index: int, text_edit: "CodeEditor", 
+    def __init__(self, main_window: "MainWindow", text_edit: "CodeEditor", 
                  file_path: str|None = None, is_dirty: bool = False, is_crypt: bool = False, 
                  highlighter: QSyntaxHighlighter|None = None):
         self.main = main_window
-        self.index = index
         self.text_edit = text_edit
         self.file_path = file_path
         self.is_dirty = is_dirty
@@ -132,6 +131,10 @@ class Tab:
         self.default_point_size = self.default_font.pointSize() # 紀錄預設大小
         # 綁定事件
         self.text_edit.textChanged.connect(self._handle_text_change)
+
+    @property
+    def index(self) -> int:
+        return self.main.tabs.indexOf(self.text_edit)
 
     def _handle_text_change(self):
         """ 處理文字變更事件 """
@@ -171,7 +174,7 @@ class Tab:
     def update_title(self):
         """ 更新title """
         base_title = os.path.basename(self.file_path) if self.file_path else "untitled"
-        final_title = base_title + " ●" if self.is_dirty else base_title
+        final_title = base_title + " •" if self.is_dirty else base_title
         self.main.tabs.setTabText(self.index, final_title)
 
 # 尋找/取代
@@ -189,7 +192,6 @@ class FR_Bar(QWidget):
         self.flags: QTextDocument.FindFlag 
         self.flags = QTextDocument.FindFlag(0)
         self.flags |= QTextDocument.FindFlag.FindCaseSensitively
-        self.case_button.setStyleSheet("background-color: lightgreen;")
         # 屬性
         self.match_count = 0       # 總匹配數
         self.match_index = 0       # 匹配索引 
@@ -221,6 +223,7 @@ class FR_Bar(QWidget):
         self.case_button.clicked.connect(self.action_toggle_case_sensitive) # 連接事件
         self.area_button.clicked.connect(self.action_set_find_area) # 連接事件
         self.find_input.textChanged.connect(self.update_search_results)
+        self.case_button.setStyleSheet("background-color: lightgreen;")
         # 排版
         self.find_layout.setContentsMargins(0, 0, 0, 0)
         self.find_layout.addWidget(self.find_label)
@@ -267,7 +270,7 @@ class FR_Bar(QWidget):
             self.replace_all_button.setDisabled(a0)
         except: pass
 
-    def _calculate_match_count(self, text: str):
+    def _update_match_count(self, text: str):
         """ 遍歷文件計算總匹配數 """
         self.match_count = 0
         doc = self.main.text_edit.document()
@@ -278,8 +281,12 @@ class FR_Bar(QWidget):
             end_pos = self.search_range.selectionEnd()
         # 全域搜尋
         else:
-            start_pos = 0
-            end_pos = doc.characterCount() - 1
+            cursor = self.main.text_edit.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.Start)
+            start_pos = cursor.position()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            end_pos = cursor.position()
+            del cursor
         
         # 不更改原始游標
         temp_cursor = QTextCursor(doc)
@@ -305,8 +312,12 @@ class FR_Bar(QWidget):
             start_pos = self.search_range.selectionStart()
             end_pos = self.search_range.selectionEnd()
         else:
-            start_pos = 0
-            end_pos = doc.characterCount() - 1
+            cursor = self.main.text_edit.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.Start)
+            start_pos = cursor.position()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            end_pos = cursor.position()
+            del cursor
             
         # 不更改原始游標
         temp_cursor = QTextCursor(doc)
@@ -335,7 +346,7 @@ class FR_Bar(QWidget):
             self._disable_buttons(True)
             return
         # 計算總數
-        self._calculate_match_count(search_text)
+        self._update_match_count(search_text)
         if self.match_count == 0:
             text = "查無結果"
             self._disable_buttons(True)
@@ -346,22 +357,23 @@ class FR_Bar(QWidget):
             self._disable_buttons(False)
         self.find_result.setText(text)
 
-    def _action_find_base(self, flags: QTextDocument.FindFlag, move_operation: QTextCursor.MoveOperation):
+    def _action_find_base(self, flags: QTextDocument.FindFlag, surround_start: int):
         """ 尋找功能基底 """
         search_text = self.find_input.text()
-        if (not search_text) or (not self.match_count): 
+        self._update_match_count(search_text)
+        if (not search_text) or (not self.match_count):
             self.find_result.setText("-/-")
             return
+        
         # 向flags方向尋找
-        if self.flags: flags |= QTextDocument.FindFlag.FindCaseSensitively # type: ignore
         is_forward_search = not bool(flags & QTextDocument.FindFlag.FindBackward)
+        # 自動更新畫面的游標，並把文字反白
         found = self.main.text_edit.find(search_text, flags)
 
         # 範圍搜尋 (範圍內環繞)
         if self.search_range:
-            range_cursor = QTextCursor(self.search_range)
-            start_pos = range_cursor.selectionStart()
-            end_pos = range_cursor.selectionEnd()
+            start_pos = self.search_range.selectionStart()
+            end_pos = self.search_range.selectionEnd()
             # 檢查是否需要環繞
             if found:
                 match_cursor = self.main.text_edit.textCursor()
@@ -371,25 +383,16 @@ class FR_Bar(QWidget):
                 # Case: 向後找超過範圍起點
                 elif not is_forward_search and match_cursor.selectionStart() < start_pos:
                     found = False
-            # 範圍內環繞
-            if not found:
-                cursor = self.main.text_edit.textCursor()
-                # 向前找/向後找
-                if is_forward_search: cursor.setPosition(start_pos)
-                else: cursor.setPosition(end_pos)
-                self.main.text_edit.setTextCursor(cursor)
-                # 重新搜尋
-                if not self.main.text_edit.find(search_text, flags):
-                    raise RuntimeError("text !found in action_find_next but found in _update_search_results")
-        # 整體環繞
-        elif not found:
-            # 從move_operation環繞
+            # 改變環繞起始位置
+            surround_start = start_pos if is_forward_search else end_pos
+        # 範圍內沒找到 -> 環繞
+        if not found:
+            # 重設游標位址
             cursor = self.main.text_edit.textCursor()
-            cursor.movePosition(move_operation)
+            cursor.setPosition(surround_start)
             self.main.text_edit.setTextCursor(cursor)
-            # 發生 -> bug
-            if not self.main.text_edit.find(search_text, flags):
-                raise RuntimeError("text !found in action_find_next but found in _update_search_results")
+            # 再找一次
+            self.main.text_edit.find(search_text, flags)
             
         # 聚焦mainwindow
         self.main.focus_text_edit()
@@ -407,7 +410,7 @@ class FR_Bar(QWidget):
         else: 
             self.flags = QTextDocument.FindFlag(0)
             self.case_button.setStyleSheet("")
-        
+
     def action_set_find_area(self): 
         """ 設定尋找範圍 """
         current_cursor = self.main.text_edit.textCursor()
@@ -425,15 +428,16 @@ class FR_Bar(QWidget):
 
     def action_find_next(self):
         """ 找下一個 """
-        flags = QTextDocument.FindFlag(0) # 向前尋找
-        operation = QTextCursor.MoveOperation.Start
-        self._action_find_base(flags, operation)
+        cursor = self.main.text_edit.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        self._action_find_base(self.flags, cursor.position())
 
     def action_find_prev(self):
         """ 找上一個 """
-        flags = QTextDocument.FindFlag.FindBackward # 向後尋找 
-        operation = QTextCursor.MoveOperation.End
-        self._action_find_base(flags, operation)
+        flags = self.flags | QTextDocument.FindFlag.FindBackward # 向後尋找 
+        cursor = self.main.text_edit.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        self._action_find_base(flags, cursor.position())
 
     def action_replace_one(self):
         """ 取代 """
@@ -1136,7 +1140,6 @@ class MainWindow(QMainWindow):
         text_edit = CodeEditor(self) # 文字框建立
         temp_Tab = Tab(
             self, 
-            index=self.tab_index, 
             text_edit=text_edit, 
             file_path=None, 
             is_dirty=False, 
@@ -1165,7 +1168,8 @@ class MainWindow(QMainWindow):
         self.tabs.currentChanged.connect(self._handle_tab_change)   # 切換分頁事件
         self.tabs.tabCloseRequested.connect(self._handle_tab_close) # 關閉分頁事件
         self.tabs.setMovable(True)                                  # 可以拖曳
-
+        # self.tabs.tabBar().tabMoved.connect(self._handel_tabMoved)
+        
     def init_FR_dock(self):
         """ 初始化 find && replace 相關設定 """
         self.FR_dock = QDockWidget("尋找/取代", self)  # 浮動視窗
@@ -1483,10 +1487,8 @@ class MainWindow(QMainWindow):
             self.tabs.setCurrentIndex(old_index)
             return
         self.tabs.removeTab(index)
-        del self.tab_list[index]
-        # 更新各分頁的索引值
-        for i in range(index, len(self.tab_list)):
-            self.tab_list[i].index = i
+        self.tab_list.pop(index)
+        # 更新 tab_index
         self.tab_index = self.tabs.currentIndex()
         # 至少留一個分頁
         if self.tabs.count() == 0: self.action_new()
@@ -1494,6 +1496,12 @@ class MainWindow(QMainWindow):
         if self.is_finding: self.find_bar.update_search_results()
         if self.is_replacing: self.replace_bar.update_search_results()
         self.focus_text_edit()
+
+    def _handel_tabMoved(self, from_: int, to: int):
+        """ 拖曳分頁 """
+        moved_tab = self.tab_list.pop(from_)
+        # 同步更新列表位置
+        self.tab_list.insert(to, moved_tab)
 
     def _dirty_warning_success(self) -> bool:
         """ 當檔案未儲存且會遺失時 詢問使用者是否要儲存(True代表不用cancel) """
@@ -1586,7 +1594,7 @@ class MainWindow(QMainWindow):
         new_index = self.tabs.count()
         # 新分頁
         text_edit = CodeEditor(self)
-        new_tab = Tab(self, index=new_index, text_edit=text_edit, file_path=None, is_dirty=True, is_crypt=False)
+        new_tab = Tab(self, text_edit=text_edit, file_path=None, is_dirty=True, is_crypt=False)
         self.tab_list.append(new_tab)
         # 切分頁
         self.tabs.addTab(text_edit, "")
@@ -2072,4 +2080,3 @@ if __name__ == "__main__":
 
 # --- FIXME: --- 
 # 尋找/取代
-# text_edit和Tab不match
