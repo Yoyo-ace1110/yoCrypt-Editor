@@ -43,3 +43,4 @@ no more Ctrl+0 -> reset zoom
 加速 find && replace
 修復輸入框跟分頁標籤不同步的問題
 修復 find && replace 尋找數量不正確的問題
+修正路徑，不再支援onefile

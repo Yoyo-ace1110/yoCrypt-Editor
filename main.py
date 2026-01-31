@@ -12,9 +12,9 @@ from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32)
 
 encoding = "utf-8"
-password_file = resource_path("password.txt")
-welcome_file = resource_path("Welcome.txt")
-filedirname = os.path.dirname(os.path.abspath(__file__))
+password_file = resource_path("../password.txt")
+welcome_file = resource_path("../Welcome.txt")
+filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 default_font_size = 3
 window: "MainWindow"
 ShortcutType = Union[
@@ -2068,8 +2068,7 @@ if __name__ == "__main__":
     sys.exit(app.exec())
 
 # --- TODO: ---
-# line_wrap_mode/clear_clipboard_on_exit/sucure_timeout
-# show_line_numbers/code_editor 避免())
+# line_wrap_mode/clear_clipboard_on_exit/show_line_numbers
 # setting: 
 # color/color_theme/verify_password_first
 # default_font_size/default_highlighter
