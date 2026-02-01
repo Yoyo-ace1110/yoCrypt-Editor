@@ -1,4 +1,5 @@
 # Copyright 2026 (C) Yoyo-ace1110 Corporation. All rights reserved.
+from PySide6.QtGui import QShowEvent
 import sys, os, qdarktheme 
 import collections.abc
 from enum import Enum
@@ -12,12 +13,15 @@ from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32)
 
 encoding = "utf-8"
+
 password_file = resource_path("password.txt")
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
-# password_file = resource_path("../password.txt")
-# welcome_file = resource_path("../Welcome.txt")
-# filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+"""
+password_file = resource_path("../password.txt")
+welcome_file = resource_path("../Welcome.txt")
+filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+"""
 default_font_size = 3
 window: "MainWindow"
 ShortcutType = Union[
@@ -363,10 +367,12 @@ class FR_Bar(QWidget):
     def _action_find_base(self, flags: QTextDocument.FindFlag, surround_start: int):
         """ 尋找功能基底 """
         search_text = self.find_input.text()
-        self._update_match_count(search_text)
-        if (not search_text) or (not self.match_count):
+        if (not search_text):
             self.find_result.setText("-/-")
             return
+        self._update_match_count(search_text)
+        if not self.match_count:
+            self.find_result.setText("查無結果")
         
         # 向flags方向尋找
         is_forward_search = not bool(flags & QTextDocument.FindFlag.FindBackward)
@@ -395,10 +401,10 @@ class FR_Bar(QWidget):
             cursor.setPosition(surround_start)
             self.main.text_edit.setTextCursor(cursor)
             # 再找一次
-            self.main.text_edit.find(search_text, flags)
+            found = self.main.text_edit.find(search_text, flags)
             
         # 聚焦mainwindow
-        self.main.focus_text_edit()
+        if found: self.main.focus_text_edit()
         # 重新計算self.match_index
         self.match_index = self._current_match_index(search_text)
         text = f"{self.match_index}/{self.match_count}" if self.match_count else "查無結果"
@@ -413,6 +419,7 @@ class FR_Bar(QWidget):
         else: 
             self.flags = QTextDocument.FindFlag(0)
             self.case_button.setStyleSheet("")
+        self.update_search_results()
 
     def action_set_find_area(self): 
         """ 設定尋找範圍 """
@@ -1121,7 +1128,6 @@ class MainWindow(QMainWindow):
         self.resize(800, 600)
         self.password: bytearray = bytearray() # 密碼
         self.tab_index: int = 0
-        self.first_FR: bool = True         # 是否尋找/取代過
         self.theme: Theme = Theme.dark     # 預設色彩主題(深色)
         self.last_find_text = ""           # 上次的搜尋關鍵字
         self.last_replace_text = ""        # 上次的取代關鍵字
@@ -1913,11 +1919,11 @@ class MainWindow(QMainWindow):
             self.find_bar.find_input.selectAll()
             self.find_bar.action_find_next()
         # 激活視窗
-        self.FR_dock.activateWindow()
-        self.find_bar.find_input.setFocus()
         self.find_bar.update_search_results()
         self._set_FR_pos()
         self.FR_dock.show()
+        self.FR_dock.activateWindow()
+        self.find_bar.find_input.setFocus()
 
     def action_replace(self):
         """ 尋找+取代 """
@@ -1933,11 +1939,11 @@ class MainWindow(QMainWindow):
             self.replace_bar.replace_input.setText(self.last_replace_text)
             self.replace_bar.replace_input.selectAll()
         # 激活視窗
-        self.FR_dock.activateWindow()
-        self.replace_bar.replace_input.setFocus()
         self.replace_bar.update_search_results()
         self._set_FR_pos()
         self.FR_dock.show()
+        self.FR_dock.activateWindow()
+        self.replace_bar.replace_input.setFocus()
 
     def _set_theme(self):
         """ 切換色彩主題 """
@@ -2083,3 +2089,5 @@ if __name__ == "__main__":
 # 區分同名檔案(標籤顯示完整路徑)
 
 # --- FIXME: --- 
+# self.replace_bar.replace_input.setFocus()
+# self.find_bar.find_input.setFocus()
