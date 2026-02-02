@@ -13,7 +13,7 @@ from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32)
 
 encoding = "utf-8"
-
+"""
 password_file = resource_path("password.txt")
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
@@ -21,7 +21,7 @@ filedirname = os.path.dirname(os.path.abspath(__file__))
 password_file = resource_path("../password.txt")
 welcome_file = resource_path("../Welcome.txt")
 filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-"""
+
 default_font_size = 3
 window: "MainWindow"
 ShortcutType = Union[
@@ -1359,7 +1359,7 @@ class MainWindow(QMainWindow):
             "highlight_as_markdown_action", 
             "Highlight as Markdown", 
             self.action_highlight_as_markdown, 
-            "Ctrl+H", 
+            None, 
             self.edit_menu
         )
 
@@ -1913,8 +1913,15 @@ class MainWindow(QMainWindow):
         self.FR_dock.hide()
         self.find_bar.show()
         self.replace_bar.hide()
+        cursor = self.text_edit.textCursor()
+        # 優先尋找反白的部分
+        if cursor.hasSelection():
+            text = cursor.selection().toPlainText()
+            self.find_bar.find_input.setText(text)
+            self.find_bar.find_input.selectAll()
+            self.find_bar.action_find_next()
         # 顯示上次搜尋的關鍵字
-        if self.last_find_text:
+        elif self.last_find_text:
             self.find_bar.find_input.setText(self.last_find_text)
             self.find_bar.find_input.selectAll()
             self.find_bar.action_find_next()
@@ -1930,10 +1937,16 @@ class MainWindow(QMainWindow):
         self.FR_dock.hide()
         self.replace_bar.show()
         self.find_bar.hide()
+        cursor = self.text_edit.textCursor()
+        # 優先尋找反白的部分
+        if cursor.hasSelection():
+            text = cursor.selection().toPlainText()
+            self.replace_bar.find_input.setText(text)
+            self.replace_bar.action_find_next()
         # 顯示上次搜尋的關鍵字
-        if self.last_find_text:
-            self.find_bar.find_input.setText(self.last_find_text)
-            self.find_bar.action_find_next()
+        elif self.last_find_text:
+            self.replace_bar.find_input.setText(self.last_find_text)
+            self.replace_bar.action_find_next()
         # 顯示上次取代的關鍵字
         if self.last_replace_text:
             self.replace_bar.replace_input.setText(self.last_replace_text)
@@ -2089,5 +2102,3 @@ if __name__ == "__main__":
 # 區分同名檔案(標籤顯示完整路徑)
 
 # --- FIXME: --- 
-# self.replace_bar.replace_input.setFocus()
-# self.find_bar.find_input.setFocus()
