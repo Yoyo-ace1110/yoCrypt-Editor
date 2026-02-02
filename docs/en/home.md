@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases"><img src="https://img.shields.io/github/v/release/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=blue" alt="Release"></a>
-  <a href="https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt"><img src="https://img.shields.io/github/license/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=important" alt="License"></a>
+  <a href="https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/.github/License.txt"><img src="https://img.shields.io/github/license/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=important" alt="License"></a>
   <img src="https://img.shields.io/github/languages/top/Yoyo-ace1110/yoCrypt-Editor?style=flat-square" alt="Top Language">
   <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square&logo=windows" alt="Platform">
   <a href="https://Yoyo-ace1110.github.io/yoCrypt-Editor/"><img src="https://img.shields.io/badge/Official%20Site-Live%20Demo-green?style=flat-square&logo=github" alt="View Site"></a>
@@ -28,7 +28,7 @@
 
 ## 🚀 Getting Started
 
-To get started, visit the [GitHub Releases](https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases) page to download the latest version. Simply extract the files and run `main.exe` (or `main/main.exe`).
+To get started, visit the [GitHub Releases](https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases) page to download the latest version. Simply extract the files and run `main/main.exe`
 
 ## 📖 Documentation
 
@@ -44,11 +44,11 @@ Learn more about the operation details and security technologies of this editor:
 
 If you wish to build from source or contribute, please ensure your environment includes:
 
-- **Python 3.x**
+- **Python 3.9+**
 - **PySide6**: Modern Qt6 Python bindings.
 - **QDarkTheme**: High-quality dark theme support.
 - **yotools200**: Custom utility toolkit (included in the repository).
-- **OpenSSL 3.x**: (Native DLLs are included; header files are required for compilation).
+- **OpenSSL 3.x**: libcrypto-3-x64.dll and libssl-3-x64.dll are included; header files are required for compilation.
 
 ## 🐞 Report a Bug
 

@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases"><img src="https://img.shields.io/github/v/release/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=blue" alt="Release"></a>
-  <a href="https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt"><img src="https://img.shields.io/github/license/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=important" alt="License"></a>
+  <a href="https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/.github/License.txt"><img src="https://img.shields.io/github/license/Yoyo-ace1110/yoCrypt-Editor?style=flat-square&color=important" alt="License"></a>
   <img src="https://img.shields.io/github/languages/top/Yoyo-ace1110/yoCrypt-Editor?style=flat-square" alt="Top Language">
   <img src="https://img.shields.io/badge/Platform-Windows-blue?style=flat-square&logo=windows" alt="Platform">
   <a href="https://Yoyo-ace1110.github.io/yoCrypt-Editor/"><img src="https://img.shields.io/badge/Official%20Site-Live%20Demo-green?style=flat-square&logo=github" alt="View Site"></a>
@@ -28,7 +28,7 @@
 
 ## 🚀 快速開始 (Getting Started)
 
-前往 [GitHub Releases](https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases) 下載最新的版本，解壓後直接執行 `main.exe` 或是 `main/main.exe` 即可開始使用。
+前往 [GitHub Releases](https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases) 下載最新的版本，解壓後直接執行 `main/main.exe` 即可開始使用。
 
 ## 📖 專案文件
 
@@ -44,11 +44,11 @@
 
 如果你希望從源碼運行或進行開發，請確保環境中包含以下依賴: 
 
-- **Python 3.x**
+- **Python 3.9+**
 - **PySide6**: 現代化的 Qt6 Python 綁定。
 - **QDarkTheme**: 提供高品質的深色視覺主題。
 - **yotools200**: 作者開發的工具集（已附於專案中）。
-- **OpenSSL 3.x**: (專案已內建 libcrypto/libssl DLL，開發環境編譯時需配置對應標頭檔)。
+- **OpenSSL 3.x**: (專案已內建 libcrypto-3-x64.dll 和 libssl-3-x64.dll，開發環境編譯時需配置對應標頭檔)。
 
 ## 🐞 問題回報 (Report a Bug)
 
