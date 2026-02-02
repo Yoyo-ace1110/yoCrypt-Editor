@@ -1,4 +1,4 @@
-yoCrypt-Editor (v2.0.2+)
+yoCrypt-Editor (v3.0.0+)
 Copyright (C) 2026 Yoyo-ace1110. All Rights Reserved.
 GitHub: https://github.com/Yoyo-ace1110/yoCrypt-Editor
 Contact: liaojiayouy@gmail.com
@@ -7,36 +7,30 @@ Contact: liaojiayouy@gmail.com
 1. TERMS AND CONDITIONS FOR USE AND REDISTRIBUTION
 ===========================================================================
 
-A. PROPRIETARY COMPONENTS & SOURCE CODE
-The software consists of Open-Source Python components and Proprietary Native 
-components (yoCryptCpp_pybind_module.pyd).
-- The Python source code is provided for transparency and audit purposes.
-- The C++ source code is PRIVATE and is not included in this distribution.
+A. SOURCE CODE AVAILABILITY
+The software consists of Python components and Native C++ components (yoCryptCpp).
+- Both Python and C++ source code are now fully open-source and included in 
+  the repository to foster community development and transparency.
 
-B. RESTRICTIONS ON USE
-- AS-IS DISTRIBUTION: You may redistribute this Software in its ORIGINAL, 
-  UNMODIFIED form.
-- ATTRIBUTION: You MUST provide clear credit to the original author (Yoyo-ace1110) 
-  and include a link to the original GitHub repository in all redistributed copies.
-- LICENSE INCLUSION: You must include this License file in all copies.
-- NON-COMMERCIAL USE: This Software is for personal, non-commercial use 
-  only. You may NOT sell, rent, or lease this Software or use it as 
-  part of a paid service.
+B. MODIFICATIONS, FORKING, AND ATTRIBUTION
+- RIGHT TO MODIFY: You are encouraged to FORK this repository and MODIFY 
+  the source code (both Python and C++) to suit your needs.
+- ATTRIBUTION: If you redistribute the Software or any modified version 
+  of it, you MUST provide clear credit to the original author (Yoyo-ace1110) 
+  and include a visible link to the original GitHub repository.
+- LICENSE INCLUSION: You must include this original License file in all 
+  copies or substantial portions of the Software.
+- NON-COMMERCIAL USE: This Software and its derivatives are for personal, 
+  non-commercial use only. You may NOT sell, rent, or lease this Software 
+  or use it as part of a paid service without explicit permission.
 
 C. CONTRIBUTIONS & FEEDBACK
-- MODIFICATIONS: If you wish to propose changes or improvements to the software, 
-  please submit a Pull Request via GitHub or contact the author via email.
-- BUG REPORTS & INQUIRIES: For any issues, bugs, or questions, please reach out 
-  directly to the author via the contact email provided above.
+- PULL REQUESTS: Contributions are welcome. If you have improved the 
+  encryption logic or UI, please submit a Pull Request via GitHub.
+- BUG REPORTS: For any issues or inquiries, please reach out via the 
+  contact email or GitHub Issues.
 
 D. DISCLAIMER OF WARRANTY (NO LIABILITY)
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -49,13 +43,11 @@ SOFTWARE. YOU USE THIS SOFTWARE AT YOUR OWN RISK.
 2. THIRD-PARTY COMPONENT NOTICES
 ===========================================================================
 
-This Software links to and utilizes the following third-party libraries. 
-Each is governed by its respective license:
+This Software utilizes the following third-party libraries under their 
+respective licenses:
 
-- PySide6 (Qt6): Licensed under GNU LGPL v3. The Software links 
-  dynamically to PySide6 libraries.
-- OpenSSL (libcrypto-3-x64.dll, libssl-3-x64.dll): Licensed under the 
-  Apache License 2.0. This Software uses dynamic linking to OpenSSL.
+- PySide6 (Qt6): Licensed under GNU LGPL v3.
+- OpenSSL (libcrypto/libssl): Licensed under the Apache License 2.0.
 - GCC Runtime: Covered by the GCC Runtime Library Exception (v3.1).
 - pybind11: Licensed under a BSD-style license.
 - qdarktheme: Licensed under the MIT License.
