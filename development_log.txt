@@ -47,3 +47,6 @@ no more Ctrl+0 -> reset zoom
 修正 find && replace 聚焦位置
 find && replace 預設優先尋找反白的文字
 更新官網(https://yoyo-ace1110.github.io/yoCrypt-Editor/)以及sitemap
+
+# 3.1.0
+解決官網License not specified的問題
