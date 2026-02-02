@@ -1,55 +1,29 @@
 yoCrypt-Editor (v3.0.0+)
 Copyright (C) 2026 Yoyo-ace1110. All Rights Reserved.
-GitHub: https://github.com/Yoyo-ace1110/yoCrypt-Editor
-Contact: liaojiayouy@gmail.com
 
 ===========================================================================
 1. TERMS AND CONDITIONS FOR USE AND REDISTRIBUTION
 ===========================================================================
 
-A. SOURCE CODE AVAILABILITY
+A. SOURCE CODE ACCESSIBILITY
 The software consists of Python components and Native C++ components (yoCryptCpp).
-- Both Python and C++ source code are now fully open-source and included in 
-  the repository to foster community development and transparency.
+- Both Python and C++ source code are now fully open-source to foster 
+  community development and transparency.
 
-B. MODIFICATIONS, FORKING, AND ATTRIBUTION
+B. FORKING, MODIFICATION, AND ATTRIBUTION
 - RIGHT TO MODIFY: You are encouraged to FORK this repository and MODIFY 
-  the source code (both Python and C++) to suit your needs.
-- ATTRIBUTION: If you redistribute the Software or any modified version 
-  of it, you MUST provide clear credit to the original author (Yoyo-ace1110) 
-  and include a visible link to the original GitHub repository.
-- LICENSE INCLUSION: You must include this original License file in all 
-  copies or substantial portions of the Software.
-- NON-COMMERCIAL USE: This Software and its derivatives are for personal, 
-  non-commercial use only. You may NOT sell, rent, or lease this Software 
-  or use it as part of a paid service without explicit permission.
+  the source code (both Python and C++) to suit your requirements.
+- ATTRIBUTION: Any redistributed version (modified or original) MUST 
+  provide clear credit to the original author (Yoyo-ace1110) and include 
+  a link to the original GitHub repository.
+- NON-COMMERCIAL USE ONLY: This Software and its derivatives may only 
+  be used for NON-COMMERCIAL purposes. 
+- You may NOT use this Software for activities intended for commercial 
+  advantage or monetary compensation. 
+- This includes, but is not limited to, selling, renting, or leasing the 
+  Software as a product or service.
 
-C. CONTRIBUTIONS & FEEDBACK
-- PULL REQUESTS: Contributions are welcome. If you have improved the 
-  encryption logic or UI, please submit a Pull Request via GitHub.
-- BUG REPORTS: For any issues or inquiries, please reach out via the 
-  contact email or GitHub Issues.
-
-D. DISCLAIMER OF WARRANTY (NO LIABILITY)
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE. YOU USE THIS SOFTWARE AT YOUR OWN RISK.
-
-===========================================================================
-2. THIRD-PARTY COMPONENT NOTICES
-===========================================================================
-
-This Software utilizes the following third-party libraries under their 
-respective licenses:
-
-- PySide6 (Qt6): Licensed under GNU LGPL v3.
-- OpenSSL (libcrypto/libssl): Licensed under the Apache License 2.0.
-- GCC Runtime: Covered by the GCC Runtime Library Exception (v3.1).
-- pybind11: Licensed under a BSD-style license.
-- qdarktheme: Licensed under the MIT License.
-
-===========================================================================
+C. DISCLAIMER
+THE SOFTWARE IS PROVIDED "AS IS". IN NO EVENT SHALL THE AUTHORS 
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE 
+USE OF THIS SOFTWARE.
