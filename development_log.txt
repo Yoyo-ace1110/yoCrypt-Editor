@@ -50,3 +50,4 @@ find && replace 預設優先尋找反白的文字
 
 # 3.1.0
 解決官網License not specified的問題
+更新LICENSE
