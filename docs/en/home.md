@@ -69,7 +69,7 @@ Copyright (c) 2026 Yoyo-ace1110. All Rights Reserved.
 This project is released under terms designed to ensure transparency and security:
 - **As-Is Distribution**: Redistribution is allowed only in its original, unmodified form with proper attribution.
 - **Non-Commercial**: Any commercial use, sale, or leasing of this software is strictly prohibited.
-- For full licensing details, please refer to [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt) or contact the author.
+- For full licensing details, please refer to [LICENSE](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/.github/LICENSE) or contact the author.
 
 ---
 
