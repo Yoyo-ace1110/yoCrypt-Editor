@@ -111,7 +111,7 @@ Copyright (c) 2026 Yoyo-ace1110. All Rights Reserved.
 - **允許原樣散佈**: 允許在保持檔案原始狀態且註明出處（附帶原作者連結）的前提下進行散佈。
 - **禁止商業行為**: 嚴禁任何形式的商業銷售、出租或作為收費服務的一部分。
 - **免責聲明**: 本軟體按「原樣」提供，作者不承擔任何使用後果或損害賠償。
-- 欲了解完整授權細節，請參閱 [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/License.txt)。
+- 欲了解完整授權細節，請參閱 [License.txt](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/LICENSE)。
 
 
 
