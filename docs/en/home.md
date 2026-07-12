@@ -10,7 +10,7 @@
   <a href="https://Yoyo-ace1110.github.io/yoCrypt-Editor/"><img src="https://img.shields.io/badge/Official%20Site-Live%20Demo-green?style=flat-square&logo=github" alt="View Site"></a>
 </p>
 
-**yoCrypt-Editor** is a high-performance, lightweight text editor designed for simplicity and security. By combining the flexibility of Python with the computational power of C++, it provides encryption for your private notes in a clean, distraction-free environment.
+**yoCrypt-Editor** is a lightweight text editor designed for simplicity and security. By combining the flexibility of Python with the computational power of C++, it provides encryption for your private notes in a clean, distraction-free environment.
 
 ### 🎨 Screenshot
 
@@ -20,9 +20,9 @@
 
 ## ✨ Key Features
 
-- **Ultra-Lightweight & Fast**: Optimized startup speeds and low resource consumption for a seamless editing experience.
+- **Lightweight & Fast**: Optimized startup speeds and low resource consumption for a seamless editing experience.
 - **Clean UI Design**: Built with **PySide6** and **QDarkTheme** to provide a modern, elegant dark-mode interface.
-- **Industrial-Grade Encryption**: Powered by a native **OpenSSL 3** core for maximum data protection.
+- **Secure Encryption**: Powered by a native **OpenSSL 3** core for maximum data protection.
 - **Out-of-the-Box Experience**: Comes bundled with all necessary DLLs; no external OpenSSL or C++ redistributables are required.
 - **Advanced Core Logic**: Integrates the proprietary `yotools200.utils` for optimized internal operations and performance.
 
@@ -65,10 +65,6 @@ If you encounter any issues or have suggestions for improvements, please reach o
 ## ⚖️ Copyright & License
 
 Copyright (c) 2026 Yoyo-ace1110. All Rights Reserved.
-
-This project is released under terms designed to ensure transparency and security:
-- **As-Is Distribution**: Redistribution is allowed only in its original, unmodified form with proper attribution.
-- **Non-Commercial**: Any commercial use, sale, or leasing of this software is strictly prohibited.
 - For full licensing details, please refer to [LICENSE](https://github.com/Yoyo-ace1110/yoCrypt-Editor/blob/main/.github/LICENSE) or contact the author.
 
 ---
