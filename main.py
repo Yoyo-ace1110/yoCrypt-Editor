@@ -6,14 +6,14 @@ from enum import Enum
 from typing import Union, Sequence
 from abc import abstractmethod, ABCMeta
 from PySide6.QtWidgets import * # pyright: ignore[reportWildcardImportFromLibrary]
-from PySide6.QtCore import * # pyright: ignore[reportWildcardImportFromLibrary]
-from PySide6.QtGui import * # pyright: ignore[reportWildcardImportFromLibrary]
-from yoCryptCpp import * # pyright: ignore[reportWildcardImportFromLibrary]
+from PySide6.QtCore import *    # pyright: ignore[reportWildcardImportFromLibrary]
+from PySide6.QtGui import *     # pyright: ignore[reportWildcardImportFromLibrary]
+from yoCryptCpp import *        # pyright: ignore[reportWildcardImportFromLibrary]
 from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32)
 
 encoding = "utf-8"
-"""
+
 password_file = resource_path("password.txt")
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
@@ -21,7 +21,7 @@ filedirname = os.path.dirname(os.path.abspath(__file__))
 password_file = resource_path("../password.txt")
 welcome_file = resource_path("../Welcome.txt")
 filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+"""
 default_font_size = 3
 window: "MainWindow"
 ShortcutType = Union[

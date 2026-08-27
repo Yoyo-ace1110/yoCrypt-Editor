@@ -1,11 +1,10 @@
 # Copyright (C) 2026 Yoyo-ace1110
-import base64, os
+import base64, sys, os
 current_path = os.path.dirname(os.path.abspath(__file__))
 dll_path = os.path.join(current_path, r"dll")
-if os.path.exists(dll_path):
-    os.add_dll_directory(os.path.abspath(dll_path))
-else:
-    print(f"[Env] Warning: MinGW bin not found at {dll_path}")
+if sys.platform == "win32":
+    if os.path.exists(dll_path): os.add_dll_directory(os.path.abspath(dll_path))
+    else:                        print(f"[Env] Warning: MinGW bin not found at {dll_path}")
 import yoCryptCpp_pybind_module
 
 def yoCrypt_init(count: int = 360000, salt_size: int = 16, hash_len: int = 32):

@@ -4,3 +4,4 @@ main.spec
 *.lnk
 ./dist/
 ./build/
+./vscode/
