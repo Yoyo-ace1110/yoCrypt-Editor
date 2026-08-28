@@ -2,7 +2,11 @@ __pycache__/
 *.lnk
 *.spec
 ./dist/
-./build/
 ./vscode/
+./build/
 ./build_x64/
 ./build_linux/
+main_x64/
+main_linux/
+./build/main_x64/
+./build/main_linux/
