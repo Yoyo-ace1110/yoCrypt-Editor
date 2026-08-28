@@ -1,4 +1,6 @@
 __pycache__/
+*.gz
+*.zip
 *.lnk
 *.spec
 ./dist/
@@ -10,5 +12,3 @@ main_x64/
 main_linux/
 ./build/main_x64/
 ./build/main_linux/
-yoCryptEditor-win64.zip
-yoCryptEditor-linux.zip
