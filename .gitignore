@@ -5,3 +5,5 @@ main.spec
 ./dist/
 ./build/
 ./vscode/
+./build_x64/
+./build_linux/

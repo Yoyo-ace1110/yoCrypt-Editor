@@ -13,14 +13,10 @@ from yotools200.utils import resource_path, Code_Timer
 yoCrypt_init(360000, 16, 32)
 
 encoding = "utf-8"
-"""
+
 password_file = resource_path("password.txt")
 welcome_file = resource_path("Welcome.txt")
 filedirname = os.path.dirname(os.path.abspath(__file__))
-"""
-password_file = resource_path("../password.txt")
-welcome_file = resource_path("../Welcome.txt")
-filedirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 default_font_size = 3
 window: "MainWindow"
@@ -2078,8 +2074,6 @@ class MainWindow(QMainWindow):
         self._clear_master_password()
         a0.accept()
 
-# pyinstaller --onefile --exclude-module PyQt5 --exclude-module PyQt6 --windowed --icon=main_icon.ico main.py
-# pyinstaller --onedir --exclude-module PyQt5 --exclude-module PyQt6 --windowed --icon=main_icon.ico main.py
 if __name__ == "__main__":
     with Code_Timer("init"):
         file_to_open = None
