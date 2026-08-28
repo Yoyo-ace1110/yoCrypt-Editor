@@ -30,7 +30,7 @@
 
 ## 🚀 Getting Started
 
-To get started, visit the [GitHub Releases](https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases) page to download the latest version. Simply extract the files and run `main.exe` (or `main/main.exe`).
+To get started, visit the [GitHub Releases](https://github.com/Yoyo-ace1110/yoCrypt-Editor/releases) page to download the latest version. Simply extract `yoCryptEditor-linux.tar.gz or yoCryptEditor-win64.zip` and run `yoCryptEditor-linux/yoCryptEditor or yoCryptEditor-win64/yoCryptEditor.exe`
 
 ## 🛠️ Development & Dependencies
 
