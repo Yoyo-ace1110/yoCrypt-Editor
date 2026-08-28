@@ -1,7 +1,6 @@
 __pycache__/
-./yotools200/__pycache__/
-main.spec
 *.lnk
+*.spec
 ./dist/
 ./build/
 ./vscode/
